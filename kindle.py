@@ -179,6 +179,8 @@ class Kindle:
 
 
 if __name__ == "__main__":
+    if not os.path.exists(OUT_DIR):
+        os.mkdir(OUT_DIR)
     parser = argparse.ArgumentParser()
     parser.add_argument("cookie", help="amazon or amazon cn cookie")
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
