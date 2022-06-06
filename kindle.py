@@ -10,6 +10,7 @@ import json
 import urllib
 import urllib3
 
+import browsercookie
 import requests
 import argparse
 
@@ -80,7 +81,7 @@ class Kindle:
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
             raise Exception("There's not csrf token here, please check")
-        self.csrf_token = match.group(1)
+        return match.group(1)
 
     def get_devices(self):
         payload = {"param": {"GetDevices": {}}}
@@ -153,7 +154,7 @@ class Kindle:
                 r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
             )[0]
             name = urllib.parse.unquote(name)
-            name = re.sub(r'[\\/:*?"<>|]', '_', name)
+            name = re.sub(r'[\\/:*?"<>|]', "_", name)
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
@@ -192,13 +193,16 @@ class Kindle:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()    
+    parser = argparse.ArgumentParser()
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
 
-    parser.add_argument("--cookie", 
-        dest="cookie",
-        default="",
-        help="amazon or amazon cn cookie")
+    cookie_group = parser.add_mutually_exclusive_group()
+    cookie_group.add_argument(
+        "--cookie", dest="cookie", default="", help="amazon or amazon cn cookie"
+    )
+    cookie_group.add_argument(
+        "--cookie-file", dest="cookie_file", default="", help="load cookie local file"
+    )
 
     parser.add_argument(
         "--cn",
@@ -224,24 +228,20 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
-    )    
-    parser.add_argument(
-        "--cookie-file",
-        dest="cookie_file",
-        default="",
-        help="load cookie local file"
     )
 
     options = parser.parse_args()
-
-    if options.cookie_file != "":
-        with open(options.cookie_file,'r') as f:
-            options.cookie = f.read()
 
     if not os.path.exists(options.outdir):
         os.makedirs(options.outdir)
     kindle = Kindle(
         options.csrf_token, options.domain, options.outdir, options.cut_length
     )
-    kindle.set_cookie_from_string(options.cookie)
+    if options.cookie_file:
+        with open(options.cookie_file, "r") as f:
+            kindle.set_cookie_from_string(f.read())
+    elif options.cookie:
+        kindle.set_cookie_from_string(options.cookie)
+    else:
+        kindle.set_cookie(browsercookie.load())
     kindle.download_books(start_index=options.index)
