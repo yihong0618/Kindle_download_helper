@@ -22,5 +22,6 @@ Download all your kindle books script.
 - 书会下载在 DOWNLOADS 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里 
 - 或者直接拖进 Calibre 里 please google it.
+- 如果过程中失败了可以使用 e.g. `--recover-index ${num}`
 
 # Enjoy

@@ -34,7 +34,7 @@ KINDLE_CN_PAYLOAD_URL = "https://www.amazon.cn/hz/mycd/ajax"
 
 
 class Kindle:
-    def __init__(self, cookie, csrf_token, is_cn=True):
+    def __init__(self, cookie, csrf_token, is_cn=True, recover_index=0):
         self.kindle_cookie = cookie
         self.session = requests.Session()
         self.header = KINDLE_HEADER
@@ -46,6 +46,9 @@ class Kindle:
         self.BOOK_ALL_URL = KINDLE_CN_BOOKALL_URL if self.is_cn else KINDLE_BOOKALL_URL
         self.has_session = False
         self.csrf_token = csrf_token
+        self.total_to_download = 0
+        # index to recover
+        self.recover_index = recover_index
 
     def _parse_kindle_cookie(self):
         cookie = SimpleCookie()
@@ -134,7 +137,7 @@ class Kindle:
         self.session.cookies = cookies
         self.has_session = True
 
-    def download_one_book(self, asin, device):
+    def download_one_book(self, asin, device, index):
         try:
             download_url = self.DOWNLOAD_URL.format(
                 asin,
@@ -152,7 +155,9 @@ class Kindle:
             name = name.replace("/", "_")
             total_size = r.headers["Content-length"]
             out = os.path.join(OUT_DIR, name)
-            print(f"downloading {name} {total_size} bytes")
+            print(
+                f"({index}/{self.total_to_download})downloading {name} {total_size} bytes"
+            )
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
@@ -165,9 +170,13 @@ class Kindle:
         # use default device
         device = self.get_devices()[0]
         asins = self.get_all_asins()
-        l = []
-        for asin in asins:
-            self.download_one_book(asin, device)
+        self.total_to_download = len(asins) - 1
+        index = self.recover_index
+        if self.recover_index:
+            print(f"recover index downloading {index}/{self.total_to_download}")
+        for asin in asins[self.recover_index :]:
+            self.download_one_book(asin, device, index)
+            index += 1
 
         print(
             "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
@@ -191,7 +200,14 @@ if __name__ == "__main__":
         action="store_true",
         help="if amazon accout is cn",
     )
+    parser.add_argument(
+        "--recover-index",
+        dest="index",
+        type=int,
+        default=0,
+        help="recover-index if download failed",
+    )
     options = parser.parse_args()
-    kindle = Kindle(options.cookie, options.csrf_token, options.is_cn)
+    kindle = Kindle(options.cookie, options.csrf_token, options.is_cn, options.index)
     kindle.make_session()
     kindle.download_books()
