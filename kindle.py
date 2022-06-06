@@ -50,8 +50,8 @@ class Kindle:
         # index to recover
         self.recover_index = recover_index
 
-        # cut length fix book name maybe too long 
-        self.cut_length = cut_length 
+        # cut length fix book name maybe too long
+        self.cut_length = cut_length
 
     def _parse_kindle_cookie(self):
         cookie = SimpleCookie()
@@ -156,9 +156,8 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = name.replace("/", "_")
-            print(name[-5:])
             if len(name) > self.cut_length:
-                name = name[:self.cut_length-5] + name[-5:]
+                name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
             out = os.path.join(OUT_DIR, name)
             print(
@@ -221,6 +220,12 @@ if __name__ == "__main__":
         help="recover-index if download failed",
     )
     options = parser.parse_args()
-    kindle = Kindle(options.cookie, options.csrf_token, options.is_cn, options.index, options.cut_length)
+    kindle = Kindle(
+        options.cookie,
+        options.csrf_token,
+        options.is_cn,
+        options.index,
+        options.cut_length,
+    )
     kindle.make_session()
     kindle.download_books()
