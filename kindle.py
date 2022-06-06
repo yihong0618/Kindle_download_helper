@@ -4,13 +4,11 @@ Great Thanks
 """
 
 from http.cookies import SimpleCookie
-import time
 import os
 import re
 import json
 import urllib
 import urllib3
-from threading import Thread
 
 import requests
 import argparse
