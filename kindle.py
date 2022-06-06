@@ -37,9 +37,11 @@ KINDLE_URLS = {
 
 
 class Kindle:
-    def __init__(self, csrf_token, is_cn=True, out_dir=DEFAULT_OUT_DIR, cut_length=100):
+    def __init__(
+        self, csrf_token, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
+    ):
         self.session = self.make_session()
-        self.urls = KINDLE_URLS["cn" if is_cn else "com"]
+        self.urls = KINDLE_URLS[domain]
         self.csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
@@ -199,9 +201,11 @@ if __name__ == "__main__":
         help="amazon or amazon cn cookie")
 
     parser.add_argument(
-        "--is-cn",
-        dest="is_cn",
-        action="store_true",
+        "--cn",
+        dest="domain",
+        action="store_const",
+        const="cn",
+        default="com",
         help="if your account is an amazon.cn account",
     )
     parser.add_argument(
@@ -237,7 +241,7 @@ if __name__ == "__main__":
     if not os.path.exists(options.outdir):
         os.makedirs(options.outdir)
     kindle = Kindle(
-        options.csrf_token, options.is_cn, options.outdir, options.cut_length
+        options.csrf_token, options.domain, options.outdir, options.cut_length
     )
     kindle.set_cookie_from_string(options.cookie)
     kindle.download_books(start_index=options.index)
