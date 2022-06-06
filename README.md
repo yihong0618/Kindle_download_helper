@@ -1,7 +1,7 @@
 # Kindle_download_helper
 Download all your kindle books script.
 
-# 使用 `amzaon CN`
+# 使用 `amazon CN`
 
 1. 登陆 amazon.cn
 2. 访问 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/
