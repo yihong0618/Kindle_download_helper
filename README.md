@@ -1,6 +1,9 @@
 # Kindle_download_helper
 Download all your kindle books script.
 
+<img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113388-fd963a1c-1a92-4528-8572-98d12c4d848f.png">
+
+
 # 使用 `amazon CN`
 
 1. 登陆 amazon.cn
@@ -23,5 +26,8 @@ Download all your kindle books script.
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里 
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--recover-index ${num}`
+
+<img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
+
 
 # Enjoy
