@@ -1,7 +1,8 @@
 # Kindle_download_helper
 Download all your kindle books script.
 
-<img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113388-fd963a1c-1a92-4528-8572-98d12c4d848f.png">
+
+<img width="1661" alt="image" src="https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png">
 
 
 # 使用 `amazon CN`
