@@ -86,7 +86,9 @@ class Kindle:
         )
         devices = r.json()
         if devices.get("error"):
-            raise Exception(f"Error: {devices.get('error')}, please visit {self.BOOK_ALL_URL} to revoke the csrftoken and cookie")
+            raise Exception(
+                f"Error: {devices.get('error')}, please visit {self.BOOK_ALL_URL} to revoke the csrftoken and cookie"
+            )
         devices = r.json()["GetDevices"]["devices"]
         return [device for device in devices if "deviceSerialNumber" in device]
 
@@ -165,15 +167,16 @@ class Kindle:
         # use default device
         device = self.get_devices()[0]
         asins = self.get_all_asins()
+        l = []
         for asin in asins:
-            thread = Thread(target=self.download_one_book, args=(asin, device))
-            thread.start()
-            thread.join()
-            time.sleep(0.1)
-        print("\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
-        "(https://github.com/apprenticeharper/DeDRM_tools)\n"
-        "with the following serial number to remove DRM: "
-        + device["deviceSerialNumber"])
+            self.download_one_book(asin, device)
+
+        print(
+            "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
+            "(https://github.com/apprenticeharper/DeDRM_tools)\n"
+            "with the following serial number to remove DRM: "
+            + device["deviceSerialNumber"]
+        )
         with open(os.path.join(OUT_DIR, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
 
@@ -194,4 +197,3 @@ if __name__ == "__main__":
     kindle = Kindle(options.cookie, options.csrf_token, options.is_cn)
     kindle.make_session()
     kindle.download_books()
-
