@@ -15,7 +15,7 @@ Download all your kindle books script.
 
 # how to `amazon.com`
 1. login amazon.com
-2. visit https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/ 
+2. visit https://www.amazon.com/hz/mycd/myx#/home/content/booksAll/dateDsc/ 
 3. find cookie F12 XHR or other ways
 4. right click this page source then find `csrfToken` value copy
 5. run: `python3 kindle.py ${cookie} ${csrfToken}`
