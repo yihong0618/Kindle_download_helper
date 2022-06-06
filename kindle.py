@@ -15,47 +15,42 @@ import argparse
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-OUT_DIR = "DOWNLOADS"
-KINDLE_BOOKALL_URL = "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll"
-KINDLE_CN_BOOKALL_URL = "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll"
+DEFAULT_OUT_DIR = "DOWNLOADS"
 
 KINDLE_HEADER = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) "
     "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
 }
 
-## download url ##
-KINDLE_CN_DOWNLOAD_URL = "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN"
-KINDLE_DOWNLOAD_URL = "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}"
-
-## payload url ##
-KINDLE_PAYLOAD_URL = "https://www.amazon.com/hz/mycd/ajax"
-KINDLE_CN_PAYLOAD_URL = "https://www.amazon.cn/hz/mycd/ajax"
+KINDLE_URLS = {
+    "cn": {
+        "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
+        "payload": "https://www.amazon.cn/hz/mycd/ajax",
+    },
+    "com": {
+        "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}",
+        "payload": "https://www.amazon.com/hz/mycd/ajax",
+    },
+}
 
 
 class Kindle:
-    def __init__(self, cookie, csrf_token, is_cn=True, recover_index=0, cut_length=100):
-        self.kindle_cookie = cookie
-        self.session = requests.Session()
-        self.header = KINDLE_HEADER
-        self.is_cn = is_cn
-        self.DOWNLOAD_URL = (
-            KINDLE_CN_DOWNLOAD_URL if self.is_cn else KINDLE_DOWNLOAD_URL
-        )
-        self.PAYLOAD_URL = KINDLE_CN_PAYLOAD_URL if self.is_cn else KINDLE_PAYLOAD_URL
-        self.BOOK_ALL_URL = KINDLE_CN_BOOKALL_URL if self.is_cn else KINDLE_BOOKALL_URL
-        self.has_session = False
+    def __init__(
+        self, cookie, csrf_token, is_cn=True, out_dir=DEFAULT_OUT_DIR, cut_length=100
+    ):
+        self.session = self.make_session(cookie)
+        self.urls = KINDLE_URLS["cn" if is_cn else "com"]
         self.csrf_token = csrf_token
         self.total_to_download = 0
-        # index to recover
-        self.recover_index = recover_index
-
-        # cut length fix book name maybe too long
+        self.out_dir = out_dir
         self.cut_length = cut_length
 
-    def _parse_kindle_cookie(self):
+    @staticmethod
+    def _parse_kindle_cookie(kindle_cookie):
         cookie = SimpleCookie()
-        cookie.load(self.kindle_cookie)
+        cookie.load(kindle_cookie)
         cookies_dict = {}
         cookiejar = None
         for key, morsel in cookie.items():
@@ -73,7 +68,7 @@ class Kindle:
         r = self.session.get(
             "https://www.amazon.cn/hz/mycd/digital-console/deviceprivacycentre"
         )
-        match = re.search('var csrfToken = "(.*)";', r.text)
+        match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
             raise Exception("There's not csrf token here, please check")
         self.csrf_token = match.group(1)
@@ -81,17 +76,16 @@ class Kindle:
     def get_devices(self):
         payload = {"param": {"GetDevices": {}}}
         r = self.session.post(
-            self.PAYLOAD_URL,
+            self.urls["payload"],
             data={
                 "data": json.dumps(payload),
                 "csrfToken": self.csrf_token,
             },
-            headers=self.header,
         )
         devices = r.json()
         if devices.get("error"):
             raise Exception(
-                f"Error: {devices.get('error')}, please visit {self.BOOK_ALL_URL} to revoke the csrftoken and cookie"
+                f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
         devices = r.json()["GetDevices"]["devices"]
         return [device for device in devices if "deviceSerialNumber" in device]
@@ -119,9 +113,8 @@ class Kindle:
         asins = []
         while True:
             r = self.session.post(
-                KINDLE_CN_PAYLOAD_URL,
+                self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
-                headers=self.header,
             )
             result = r.json()
             asins += [book["asin"] for book in result["OwnershipData"]["items"]]
@@ -133,33 +126,33 @@ class Kindle:
                 break
         return asins
 
-    def make_session(self):
-        cookies = self._parse_kindle_cookie()
+    def make_session(self, cookie):
+        cookies = self._parse_kindle_cookie(cookie)
         if not cookies:
             raise Exception("Please make sure your amazon cookie is right")
-        self.session.cookies = cookies
-        self.has_session = True
+        session = requests.Session()
+        session.cookies = cookies
+        session.headers.update(KINDLE_HEADER)
+        return session
 
     def download_one_book(self, asin, device, index):
         try:
-            download_url = self.DOWNLOAD_URL.format(
+            download_url = self.urls["download"].format(
                 asin,
                 device["deviceSerialNumber"],
                 device["deviceType"],
                 device["customerId"],
             )
-            r = self.session.get(
-                download_url, headers=self.header, verify=False, stream=True
-            )
+            r = self.session.get(download_url, verify=False, stream=True)
             name = re.findall(
-                "filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
+                r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
             )[0]
             name = urllib.parse.unquote(name)
             name = name.replace("/", "_")
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
-            out = os.path.join(OUT_DIR, name)
+            out = os.path.join(self.out_dir, name)
             print(
                 f"({index}/{self.total_to_download})downloading {name} {total_size} bytes"
             )
@@ -171,15 +164,15 @@ class Kindle:
             print(str(e))
             print(f"{asin} download failed")
 
-    def download_books(self):
+    def download_books(self, start_index=0):
         # use default device
         device = self.get_devices()[0]
         asins = self.get_all_asins()
         self.total_to_download = len(asins) - 1
-        index = self.recover_index
-        if self.recover_index:
-            print(f"recover index downloading {index}/{self.total_to_download}")
-        for asin in asins[self.recover_index :]:
+        if start_index:
+            print(f"recover index downloading {start_index}/{self.total_to_download}")
+        index = start_index
+        for asin in asins[start_index:]:
             self.download_one_book(asin, device, index)
             index += 1
 
@@ -189,13 +182,11 @@ class Kindle:
             "with the following serial number to remove DRM: "
             + device["deviceSerialNumber"]
         )
-        with open(os.path.join(OUT_DIR, "key.txt"), "w") as f:
+        with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
 
 
 if __name__ == "__main__":
-    if not os.path.exists(OUT_DIR):
-        os.mkdir(OUT_DIR)
     parser = argparse.ArgumentParser()
     parser.add_argument("cookie", help="amazon or amazon cn cookie")
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
@@ -219,13 +210,18 @@ if __name__ == "__main__":
         default=100,
         help="recover-index if download failed",
     )
+    parser.add_argument(
+        "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
+    )
     options = parser.parse_args()
+
+    if not os.path.exists(options.outdir):
+        os.makedirs(options.outdir)
     kindle = Kindle(
         options.cookie,
         options.csrf_token,
         options.is_cn,
-        options.index,
+        options.outdir,
         options.cut_length,
     )
-    kindle.make_session()
-    kindle.download_books()
+    kindle.download_books(start_index=options.index)
