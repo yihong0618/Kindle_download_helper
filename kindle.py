@@ -148,7 +148,7 @@ class Kindle:
                 r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
             )[0]
             name = urllib.parse.unquote(name)
-            name = name.replace("/", "_")
+            name = re.sub(r'[\\/:*?"<>|]', '_', name)
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
