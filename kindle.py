@@ -34,7 +34,7 @@ KINDLE_CN_PAYLOAD_URL = "https://www.amazon.cn/hz/mycd/ajax"
 
 
 class Kindle:
-    def __init__(self, cookie, csrf_token, is_cn=True, recover_index=0):
+    def __init__(self, cookie, csrf_token, is_cn=True, recover_index=0, cut_length=100):
         self.kindle_cookie = cookie
         self.session = requests.Session()
         self.header = KINDLE_HEADER
@@ -49,6 +49,9 @@ class Kindle:
         self.total_to_download = 0
         # index to recover
         self.recover_index = recover_index
+
+        # cut length fix book name maybe too long 
+        self.cut_length = cut_length 
 
     def _parse_kindle_cookie(self):
         cookie = SimpleCookie()
@@ -153,6 +156,9 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = name.replace("/", "_")
+            print(name[-5:])
+            if len(name) > self.cut_length:
+                name = name[:self.cut_length-5] + name[-5:]
             total_size = r.headers["Content-length"]
             out = os.path.join(OUT_DIR, name)
             print(
@@ -207,7 +213,14 @@ if __name__ == "__main__":
         default=0,
         help="recover-index if download failed",
     )
+    parser.add_argument(
+        "--cut-length",
+        dest="cut_length",
+        type=int,
+        default=100,
+        help="recover-index if download failed",
+    )
     options = parser.parse_args()
-    kindle = Kindle(options.cookie, options.csrf_token, options.is_cn, options.index)
+    kindle = Kindle(options.cookie, options.csrf_token, options.is_cn, options.index, options.cut_length)
     kindle.make_session()
     kindle.download_books()
