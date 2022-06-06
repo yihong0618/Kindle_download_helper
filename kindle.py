@@ -194,7 +194,7 @@ if __name__ == "__main__":
         "--is-cn",
         dest="is_cn",
         action="store_true",
-        help="if amazon accout is cn",
+        help="if your account is an amazon.cn account",
     )
     parser.add_argument(
         "--recover-index",
