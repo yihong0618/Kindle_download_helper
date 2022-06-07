@@ -8,8 +8,10 @@ Download all your kindle books script.
 # 准备
 
 1. python3
-2. pip
-3. pip install -r requirements.txt
+2. 安装依赖
+```
+pip3 install -r requirements.txt
+```
 
 # 使用 `amazon CN`
 
@@ -34,7 +36,7 @@ Download all your kindle books script.
 
 # 注意
 - cookie 和 csrf token 会过期，重新刷新下 amazon 的页面就行
-- 书会下载在 DOWNLOADS 里
+- 程序会自动在命令执行的目录下创建 `DOWNLOADS` 目录，书会下载在 `DOWNLOADS` 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--recover-index ${num}`
