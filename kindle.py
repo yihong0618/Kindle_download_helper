@@ -23,15 +23,20 @@ KINDLE_HEADER = {
     "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
 }
 
+CONTENT_TYPES = {
+    "EBOK": "Ebook",
+    "PDOC": "KindlePDoc",
+}
+
 KINDLE_URLS = {
     "cn": {
         "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
-        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
         "payload": "https://www.amazon.cn/hz/mycd/ajax",
     },
     "com": {
         "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
-        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
     },
 }
@@ -100,7 +105,7 @@ class Kindle:
         devices = r.json()["GetDevices"]["devices"]
         return [device for device in devices if "deviceSerialNumber" in device]
 
-    def get_all_asins(self):
+    def get_all_asins(self, filetype="EBOK"):
         """
         TODO: refactor this function
         """
@@ -113,12 +118,22 @@ class Kindle:
                     "sortIndex": "DATE",
                     "startIndex": startIndex,
                     "batchSize": batchSize,
-                    "contentType": "Ebook",
+                    "contentType": CONTENT_TYPES[filetype],
                     "itemStatus": ["Active"],
-                    "originType": ["Purchase"],
                 }
             }
         }
+
+        if filetype == "EBOK":
+            payload["param"]["OwnershipData"].update({
+                "originType": ["Purchase"],
+            })
+        else:
+            batchSize = 18
+            payload["param"]["OwnershipData"].update({
+                "batchSize": batchSize,
+                "isExtendedMYK": False,
+            })
 
         asins = []
         while True:
@@ -141,9 +156,10 @@ class Kindle:
         session.headers.update(KINDLE_HEADER)
         return session
 
-    def download_one_book(self, asin, device, index):
+    def download_one_book(self, asin, device, index, filetype="EBOK"):
         try:
             download_url = self.urls["download"].format(
+                filetype,
                 asin,
                 device["deviceSerialNumber"],
                 device["deviceType"],
@@ -170,16 +186,16 @@ class Kindle:
             print(str(e))
             print(f"{asin} download failed")
 
-    def download_books(self, start_index=0):
+    def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        asins = self.get_all_asins()
+        asins = self.get_all_asins(filetype=filetype)
         self.total_to_download = len(asins) - 1
         if start_index > 0:
             print(f"resuming the download {start_index}/{self.total_to_download}")
         index = start_index
         for asin in asins[start_index:]:
-            self.download_one_book(asin, device, index)
+            self.download_one_book(asin, device, index, filetype)
             index += 1
 
         print(
@@ -229,6 +245,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
     )
+    parser.add_argument(
+        "--pdoc",
+        dest="filetype",
+        action="store_const",
+        const="PDOC",
+        default="EBOK",
+        help="to download personal documents or ebook",
+    )
 
     options = parser.parse_args()
 
@@ -244,4 +268,5 @@ if __name__ == "__main__":
         kindle.set_cookie_from_string(options.cookie)
     else:
         kindle.set_cookie(browsercookie.load())
-    kindle.download_books(start_index=options.index)
+
+    kindle.download_books(start_index=options.index, filetype=options.filetype)
