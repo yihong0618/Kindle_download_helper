@@ -4,6 +4,7 @@ Great Thanks
 """
 
 from http.cookies import SimpleCookie
+import logging
 import os
 import re
 import json
@@ -13,6 +14,8 @@ import urllib3
 import browsercookie
 import requests
 import argparse
+
+logger = logging.getLogger("kindle")
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -35,7 +38,7 @@ KINDLE_URLS = {
         "payload": "https://www.amazon.cn/hz/mycd/ajax",
     },
     "com": {
-        "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
+        "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
     },
@@ -61,6 +64,9 @@ class Kindle:
         if not cookiejar:
             raise Exception("Please make sure your amazon cookie is right")
         self.session.cookies = cookiejar
+
+    def set_cookie_from_browser(self):
+        self.set_cookie(browsercookie.load())
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
@@ -105,7 +111,7 @@ class Kindle:
         devices = r.json()["GetDevices"]["devices"]
         return [device for device in devices if "deviceSerialNumber" in device]
 
-    def get_all_asins(self, filetype="EBOK"):
+    def get_all_books(self, filetype="EBOK"):
         """
         TODO: refactor this function
         """
@@ -125,31 +131,36 @@ class Kindle:
         }
 
         if filetype == "EBOK":
-            payload["param"]["OwnershipData"].update({
-                "originType": ["Purchase"],
-            })
+            payload["param"]["OwnershipData"].update(
+                {
+                    "originType": ["Purchase"],
+                }
+            )
         else:
             batchSize = 18
-            payload["param"]["OwnershipData"].update({
-                "batchSize": batchSize,
-                "isExtendedMYK": False,
-            })
+            payload["param"]["OwnershipData"].update(
+                {
+                    "batchSize": batchSize,
+                    "isExtendedMYK": False,
+                }
+            )
 
-        asins = []
+        books = []
         while True:
             r = self.session.post(
                 self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
             )
+            r.raise_for_status()
             result = r.json()
-            asins += [book["asin"] for book in result["OwnershipData"]["items"]]
+            books += result["OwnershipData"]["items"]
 
             if result["OwnershipData"]["hasMoreItems"]:
                 startIndex += batchSize
                 payload["param"]["OwnershipData"]["startIndex"] = startIndex
             else:
                 break
-        return asins
+        return books
 
     def make_session(self):
         session = requests.Session()
@@ -175,21 +186,21 @@ class Kindle:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
             out = os.path.join(self.out_dir, name)
-            print(
+            logger.info(
                 f"({index}/{self.total_to_download})downloading {name} {total_size} bytes"
             )
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
-            print(f"{name} downloaded")
+            logger.info(f"{name} downloaded")
         except Exception as e:
-            print(str(e))
-            print(f"{asin} download failed")
+            logger.info(str(e))
+            logger.info(f"{asin} download failed")
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        asins = self.get_all_asins(filetype=filetype)
+        asins = [book["asin"] for book in self.get_all_books(filetype=filetype)]
         self.total_to_download = len(asins) - 1
         if start_index > 0:
             print(f"resuming the download {start_index}/{self.total_to_download}")
@@ -198,7 +209,7 @@ class Kindle:
             self.download_one_book(asin, device, index, filetype)
             index += 1
 
-        print(
+        logger.info(
             "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
             "(https://github.com/apprenticeharper/DeDRM_tools)\n"
             "with the following serial number to remove DRM: "
@@ -209,6 +220,9 @@ class Kindle:
 
 
 if __name__ == "__main__":
+
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
 
@@ -267,6 +281,5 @@ if __name__ == "__main__":
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
     else:
-        kindle.set_cookie(browsercookie.load())
-
+        kindle.set_cookie_from_browser()
     kindle.download_books(start_index=options.index, filetype=options.filetype)
