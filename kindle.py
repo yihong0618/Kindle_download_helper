@@ -187,9 +187,14 @@ class Kindle:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("cookie", help="amazon or amazon cn cookie")
+    parser = argparse.ArgumentParser()    
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
+
+    parser.add_argument("--cookie", 
+        dest="cookie",
+        default="",
+        help="amazon or amazon cn cookie")
+
     parser.add_argument(
         "--is-cn",
         dest="is_cn",
@@ -212,8 +217,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
+    )    
+    parser.add_argument(
+        "--cookie-file",
+        dest="cookie_file",
+        default="",
+        help="load cookie local file"
     )
+
     options = parser.parse_args()
+
+    if options.cookie_file != "":
+        with open(options.cookie_file,'r') as f:
+            options.cookie = f.read()
 
     if not os.path.exists(options.outdir):
         os.makedirs(options.outdir)
