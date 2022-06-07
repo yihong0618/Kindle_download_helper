@@ -4,10 +4,10 @@ import os
 import sys
 from typing import NamedTuple
 import webbrowser
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 
 import kindle
-from kindle_helper_ui import Ui_MainDialog
+from ui_kindle import Ui_MainDialog
 
 logger = logging.getLogger("kindle")
 
@@ -29,12 +29,14 @@ class Book(NamedTuple):
     title: str
     author: str
     asin: str
+    done: bool
 
 
 class Worker(QtCore.QObject):
     finished = QtCore.Signal()
     progress = QtCore.Signal(int)
     logging = QtCore.Signal(str)
+    done = QtCore.Signal(int)
 
     def __init__(self, iterable, kindle):
         super().__init__()
@@ -46,14 +48,22 @@ class Worker(QtCore.QObject):
         logger.handlers[:] = [SignalLogHandler(self.logging)]
         try:
             devices = self.kindle.get_devices()
-            device = devices[0]
-            for i, book in enumerate(self.iterable, 1):
-                self.kindle.download_one_book(book.asin, device, i)
-                self.progress.emit(i)
         except Exception:
-            logger.exception("download failed")
-        finally:
+            logger.exception("get devices failed")
             self.finished.emit()
+            return
+        device = devices[0]
+        for i, book in enumerate(self.iterable, 1):
+            try:
+                self.kindle.download_one_book(book.asin, device, i)
+            except Exception:
+                logger.exception("download failed")
+            else:
+                self.done.emit(book.id)
+            finally:
+                self.progress.emit(i)
+
+        self.finished.emit()
 
 
 class KindleMainDialog(QtWidgets.QDialog):
@@ -107,20 +117,16 @@ class KindleMainDialog(QtWidgets.QDialog):
         else:
             return "com"
 
-    @QtCore.Slot()
     def on_login_amazon(self):
         url = kindle.KINDLE_URLS[self.getDomain()]["bookall"]
         webbrowser.open(url)
 
-    @QtCore.Slot()
     def on_from_input(self, checked):
         self.ui.cookieTextEdit.setEnabled(checked)
 
-    @QtCore.Slot()
     def on_from_browser(self, checked):
         self.ui.cookieTextEdit.setEnabled(not checked)
 
-    @QtCore.Slot()
     def on_browse_dir(self):
         file_dialog = QtWidgets.QFileDialog()
         file_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
@@ -128,7 +134,6 @@ class KindleMainDialog(QtWidgets.QDialog):
         if file_dialog.exec_():
             self.ui.outDirEdit.setText(file_dialog.selectedFiles()[0])
 
-    @QtCore.Slot()
     def on_fetch_books(self):
         self.ui.fetchButton.setEnabled(False)
         self.setup_kindle()
@@ -158,13 +163,13 @@ class KindleMainDialog(QtWidgets.QDialog):
         yield gen()
         self.ui.verticalLayout_7.removeWidget(progressbar)
 
-    @QtCore.Slot()
     def on_download_books(self):
         self.setup_kindle()
         if not os.path.exists(self.kindle.out_dir):
             os.makedirs(self.kindle.out_dir)
         self.thread = QtCore.QThread()
-        iterable, total = self.book_model._data, self.book_model.rowCount(0)
+        iterable = self.book_model.data_to_download()
+        total = len(iterable)
         self.kindle.total_to_download = total
         self.worker = Worker(iterable, self.kindle)
         self.worker.moveToThread(self.thread)
@@ -175,6 +180,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.done.connect(self.on_book_done)
         self.worker.logging.connect(self.ui.logBrowser.append)
         self.worker.progress.connect(
             lambda n: self.progressbar.setValue(round(n / total * 100, 2))
@@ -184,8 +190,12 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.thread.start()
 
     def on_finish_download(self):
+        self.ui.downloadButton.setEnabled(True)
         self.ui.verticalLayout_7.removeWidget(self.progressbar)
         self.progressbar.deleteLater()
+
+    def on_book_done(self, idx):
+        self.book_model.mark_done(idx - 1)
 
 
 class BookItemModel(QtCore.QAbstractTableModel):
@@ -199,8 +209,18 @@ class BookItemModel(QtCore.QAbstractTableModel):
             return self._header[section]
         return None
 
+    def mark_done(self, idx):
+        if idx >= len(self._data):
+            return
+        self._data[idx] = Book(*self._data[idx][:-1], done=True)
+        self.layoutAboutToBeChanged.emit()
+        self.dataChanged.emit(
+            self.createIndex(idx, 0), self.createIndex(idx, self.columnCount(0))
+        )
+        self.layoutChanged.emit()
+
     def updateData(self, data):
-        self._data = [Book(i, *row) for i, row in enumerate(data, 1)]
+        self._data = [Book(i, *row, False) for i, row in enumerate(data, 1)]
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(
             self.createIndex(0, 0),
@@ -208,12 +228,17 @@ class BookItemModel(QtCore.QAbstractTableModel):
         )
         self.layoutChanged.emit()
 
+    def data_to_download(self):
+        return [item for item in self._data if not item.done]
+
     def data(self, index, role):
         if not index.isValid():
             return None
         value = self._data[index.row()][index.column()]
         if role == QtCore.Qt.DisplayRole:
             return value
+        if role == QtCore.Qt.BackgroundRole and self._data[index.row()].done:
+            return QtGui.QColor(65, 237, 74)
         return None
 
     def rowCount(self, parent):

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Kindle 下载助手</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="kindle.qrc">
+    <normaloff>:/icon/resource/kindle.png</normaloff>:/icon/resource/kindle.png</iconset>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
    <property name="spacing">
     <number>10</number>
@@ -166,7 +170,11 @@ hr { height: 1px; border-width: 0; }
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QPlainTextEdit" name="cookieTextEdit"/>
+            <widget class="QPlainTextEdit" name="cookieTextEdit">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -275,6 +283,8 @@ hr { height: 1px; border-width: 0; }
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="kindle.qrc"/>
+ </resources>
  <connections/>
 </ui>
