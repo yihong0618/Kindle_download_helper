@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 import logging
 import os
 import sys
@@ -131,7 +130,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         file_dialog = QtWidgets.QFileDialog()
         file_dialog.setFileMode(QtWidgets.QFileDialog.Directory)
         file_dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
-        if file_dialog.exec_():
+        if file_dialog.exec():
             self.ui.outDirEdit.setText(file_dialog.selectedFiles()[0])
 
     def on_fetch_books(self):
@@ -147,21 +146,6 @@ class KindleMainDialog(QtWidgets.QDialog):
             self.on_error()
         finally:
             self.ui.fetchButton.setEnabled(True)
-
-    @contextmanager
-    def make_progressbar(self, iterable, total):
-        parent = self.ui.logBrowser.parent()
-        progressbar = QtWidgets.QProgressBar(parent)
-
-        def gen():
-            for i, item in enumerate(iterable, 1):
-                try:
-                    yield item
-                finally:
-                    progressbar.setValue(round(i / total * 100, 2))
-
-        yield gen()
-        self.ui.verticalLayout_7.removeWidget(progressbar)
 
     def on_download_books(self):
         self.setup_kindle()
@@ -193,6 +177,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.ui.downloadButton.setEnabled(True)
         self.ui.verticalLayout_7.removeWidget(self.progressbar)
         self.progressbar.deleteLater()
+        QtWidgets.QMessageBox.information(self, "下载完成", "下载完成")
 
     def on_book_done(self, idx):
         self.book_model.mark_done(idx - 1)
@@ -238,7 +223,7 @@ class BookItemModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.DisplayRole:
             return value
         if role == QtCore.Qt.BackgroundRole and self._data[index.row()].done:
-            return QtGui.QColor(65, 237, 74)
+            return QtGui.QColor(65, 237, 74, 128)
         return None
 
     def rowCount(self, parent):
