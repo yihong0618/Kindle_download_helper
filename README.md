@@ -39,7 +39,7 @@ pip3 install -r requirements.txt
 - 程序会自动在命令执行的目录下创建 `DOWNLOADS` 目录，书会下载在 `DOWNLOADS` 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
 - 或者直接拖进 Calibre 里 please google it.
-- 如果过程中失败了可以使用 e.g. `--recover-index ${num}`
+- 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
 - 如果出现名字太长的报错可以增加: `--cut-length 80` 来截断文件名
 
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">

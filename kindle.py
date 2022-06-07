@@ -175,8 +175,8 @@ class Kindle:
         device = self.get_devices()[0]
         asins = self.get_all_asins()
         self.total_to_download = len(asins) - 1
-        if start_index:
-            print(f"recover index downloading {start_index}/{self.total_to_download}")
+        if start_index > 0:
+            print(f"resuming the download {start_index}/{self.total_to_download}")
         index = start_index
         for asin in asins[start_index:]:
             self.download_one_book(asin, device, index)
@@ -213,18 +213,18 @@ if __name__ == "__main__":
         help="if your account is an amazon.cn account",
     )
     parser.add_argument(
-        "--recover-index",
+        "--resume-from",
         dest="index",
         type=int,
         default=0,
-        help="recover-index if download failed",
+        help="resume from the index if download failed",
     )
     parser.add_argument(
         "--cut-length",
         dest="cut_length",
         type=int,
         default=100,
-        help="recover-index if download failed",
+        help="truncate the file name",
     )
     parser.add_argument(
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
