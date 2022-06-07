@@ -1,1 +1,3 @@
 requests
+browsercookie @ git+https://github.com/richardpenman/browsercookie@master
+pywin32 ; sys_platform == 'win32'
