@@ -5,6 +5,12 @@ Download all your kindle books script.
 <img width="1661" alt="image" src="https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png">
 
 
+# 准备
+
+1. python3
+2. pip
+3. pip install -r requirements.txt
+
 # 使用 `amazon CN`
 
 1. 登陆 amazon.cn
@@ -38,3 +44,8 @@ Download all your kindle books script.
 
 
 # Enjoy
+# 赞赏
+
+- 谢谢就够啦
+- 分享给需要的人就更好了
+ 
