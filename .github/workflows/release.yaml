@@ -38,11 +38,13 @@ jobs:
       - name: Make executable windows
         if: matrix.os == 'windows'
         run: |
+          mkdir downloads
           pyinstaller --onefile --clean --windowed --icon=resource/kindle.ico kindle_download_helper.py
 
       - name: Make executable linux
         if: matrix.os != 'windows'
         run: |
+          mkdir downloads
           pyinstaller --onefile --clean --windowed --icon=resource/kindle.icns kindle_download_helper.py
 
       - name: Make dist(MacOS)
