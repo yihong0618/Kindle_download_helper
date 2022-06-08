@@ -26,9 +26,13 @@ pip3 install -r requirements.txt
 3. right click this page source then find `csrfToken` value copy
 4. run: `python3 kindle.py ${csrfToken}`
 
+# 自动获取 cookie
+
+如果你的运行环境是本机，项目可以使用 browsercookie 库自动从浏览器中获取 cookie。如果获取有问题，可以参考下面手动输入 cookie。
+
 # 手动输入 cookie
 
-若默认情况下提示 cookie 无效，你也可以手动输入 cookie 。方法是在上述全部书籍列表页面，按 <kbd>F12</kbd> 或右键点击——检查，进入控制台(Console)，输入 `document.cookie`，回车。复制输出的结果即可。
+若默认情况下提示 cookie 无效，你也可以手动输入 cookie 。方法是在上述全部书籍列表页面，按 <kbd>F12</kbd> 或右键点击——检查，进入网络面板(Network)，找到任意一个 `ajax` 请求，复制请求头里的 Cookie 即可。同时也能在 Payload 里找到 csrfToken。
 
 然后，执行 `python3 kindle.py --cookie ${cookie} ${csrfToken}`。
 
@@ -50,4 +54,3 @@ pip3 install -r requirements.txt
 
 - 谢谢就够啦
 - 分享给需要的人就更好了
- 
