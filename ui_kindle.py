@@ -256,7 +256,7 @@ class Ui_MainDialog(object):
         self.label.setText(QCoreApplication.translate("MainDialog", u"\u6587\u4ef6\u540d\u622a\u65ad", None))
         self.copyrightBox.setTitle("")
         self.label_6.setText(QCoreApplication.translate("MainDialog", u"\u9690\u79c1\u58f0\u660e\uff1a\u6211\u4eec\u4e0d\u4f1a\u6536\u96c6\u4efb\u4f55\u7528\u6237\u4fe1\u606f\uff0c\u8bf7\u653e\u5fc3\u4f7f\u7528", None))
-        self.label_3.setText(QCoreApplication.translate("MainDialog", u"Copyright 2022 \u00a9 [yihong0618](https://github.com/yihong0618)", None))
+        self.label_3.setText(QCoreApplication.translate("MainDialog", u"Copyright 2022 \u00a9 [yihong0618](https://github.com/yihong0618) and [frostming](https://github.com/frostming)", None))
         self.label_4.setText(QCoreApplication.translate("MainDialog", u"GitHub: <https://github.com/yihong0618/Kindle_download_helper>", None))
         self.label_5.setText(QCoreApplication.translate("MainDialog", u"License: MIT", None))
     # retranslateUi

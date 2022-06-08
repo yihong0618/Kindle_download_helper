@@ -252,7 +252,7 @@ hr { height: 1px; border-width: 0; }
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Copyright 2022 © [yihong0618](https://github.com/yihong0618)</string>
+           <string>Copyright 2022 © [yihong0618](https://github.com/yihong0618) and [frostming](https://github.com/frostming) <div frost=""></div></string>
           </property>
           <property name="textFormat">
            <enum>Qt::MarkdownText</enum>
