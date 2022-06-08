@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import sys
@@ -28,6 +29,7 @@ class Book(NamedTuple):
     title: str
     author: str
     asin: str
+    filetype: str
     done: bool
 
 
@@ -37,11 +39,10 @@ class Worker(QtCore.QObject):
     logging = QtCore.Signal(str)
     done = QtCore.Signal(int)
 
-    def __init__(self, iterable, kindle, filetype="EBOK"):
+    def __init__(self, iterable, kindle):
         super().__init__()
         self.iterable = iterable
         self.kindle = kindle
-        self.filetype = filetype
 
     def run(self):
         logger.setLevel(logging.INFO)
@@ -55,7 +56,7 @@ class Worker(QtCore.QObject):
         device = devices[0]
         for i, book in enumerate(self.iterable, 1):
             try:
-                self.kindle.download_one_book(book.asin, device, i, self.filetype)
+                self.kindle.download_one_book(book.asin, device, i, book.filetype)
             except Exception:
                 logger.exception("download failed")
             else:
@@ -148,11 +149,24 @@ class KindleMainDialog(QtWidgets.QDialog):
     def on_fetch_books(self):
         self.ui.fetchButton.setEnabled(False)
         self.setup_kindle()
+        filetype = self.get_filetype()
         try:
-            all_books = self.kindle.get_all_books()
-            book_data = [
-                [item["title"], item["authors"], item["asin"]] for item in all_books
-            ]
+            all_books = self.kindle.get_all_books(filetype)
+            if filetype == "EBOK":
+                book_data = [
+                    [item["title"], item["authors"], item["asin"], filetype]
+                    for item in all_books
+                ]
+            else:
+                book_data = [
+                    [
+                        html.unescape(item["title"]),
+                        html.unescape(item["author"]),
+                        item["asin"],
+                        filetype,
+                    ]
+                    for item in all_books
+                ]
             self.book_model.updateData(book_data)
         except Exception:
             self.on_error()
@@ -167,7 +181,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         iterable = self.book_model.data_to_download()
         total = len(iterable)
         self.kindle.total_to_download = total
-        self.worker = Worker(iterable, self.kindle, self.get_filetype())
+        self.worker = Worker(iterable, self.kindle)
         self.worker.moveToThread(self.thread)
         parent = self.ui.logBrowser.parent()
         self.progressbar = QtWidgets.QProgressBar(parent)
