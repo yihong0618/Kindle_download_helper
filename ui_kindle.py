@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QGroupBox, QHBoxLayout,
     QHeaderView, QLabel, QLineEdit, QPlainTextEdit,
     QPushButton, QRadioButton, QSizePolicy, QSpinBox,
     QTableView, QTextBrowser, QVBoxLayout, QWidget)
-import kindle_rc
+import icon_rc
 
 class Ui_MainDialog(object):
     def setupUi(self, MainDialog):
@@ -242,8 +242,8 @@ class Ui_MainDialog(object):
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
-"</style></head><body style=\" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Microsoft YaHei UI'; font-size:9pt;\"><br /></p></body></html>", None))
         self.settingsBox.setTitle(QCoreApplication.translate("MainDialog", u"\u8bbe\u7f6e", None))
         self.loginGroupBox.setTitle("")
         self.radioCOM.setText(QCoreApplication.translate("MainDialog", u"\u7f8e\u4e9a(.com)", None))
