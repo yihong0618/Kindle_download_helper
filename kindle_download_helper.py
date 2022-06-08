@@ -61,7 +61,8 @@ class Worker(QtCore.QObject):
                 self.done.emit(book.id)
             finally:
                 self.progress.emit(i)
-
+        with open(os.path.join(self.kindle.out_dir, "key.txt"), "w") as f:
+            f.write(f"Key is: {device['deviceSerialNumber']}")
         self.finished.emit()
 
 
