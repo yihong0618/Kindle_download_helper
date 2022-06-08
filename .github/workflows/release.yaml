@@ -1,6 +1,7 @@
 name: Make Distribution
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
@@ -34,15 +35,15 @@ jobs:
         run: |
           python -m pip install -U -r requirements.txt -r requirements_gui.txt
 
-      - name: Make executable
+      - name: Make executable windows
+        if: matrix.os == 'windows'
         run: |
-          mkdir downloads
-          if [[ "${{ matrix.os }}" == "windows" ]]; then
-            icon="kindle.ico"
-          else
-            icon="kindle.icns"
-          fi
-          pyinstaller --onefile --clean --windowed --icon=resource/${icon} kindle_download_helper.py
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.ico kindle_download_helper.py
+
+      - name: Make executable linux
+        if: matrix.os != 'windows'
+        run: |
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.icns kindle_download_helper.py
 
       - name: Make dist(MacOS)
         if: matrix.os == 'macos'
