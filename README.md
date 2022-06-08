@@ -23,12 +23,14 @@ pip3 install -r requirements.txt
 2. 访问 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/
 3. 右键查看源码，搜索 `csrfToken` 复制后面的 value
 4. 执行 `python3 kindle.py ${csrfToken} --cn`
+4. 如果下载推送文件 `python3 kindle.py ${csrfToken} --cn --pdoc`
 
 ## how to `amazon.com`
 1. login amazon.com
 2. visit https://www.amazon.com/hz/mycd/myx#/home/content/booksAll/dateDsc/
 3. right click this page source then find `csrfToken` value copy
 4. run: `python3 kindle.py ${csrfToken}`
+4. if is doc file `python3 kindle.py ${csrfToken} --pdoc`
 
 ## 自动获取 cookie
 
@@ -49,6 +51,8 @@ pip3 install -r requirements.txt
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
 - 如果出现名字太长的报错可以增加: `--cut-length 80` 来截断文件名
+- 支持推送文件下载 `--pdoc`
+
 
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
 
