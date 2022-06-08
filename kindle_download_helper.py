@@ -37,10 +37,11 @@ class Worker(QtCore.QObject):
     logging = QtCore.Signal(str)
     done = QtCore.Signal(int)
 
-    def __init__(self, iterable, kindle):
+    def __init__(self, iterable, kindle, filetype="EBOK"):
         super().__init__()
         self.iterable = iterable
         self.kindle = kindle
+        self.filetype = filetype
 
     def run(self):
         logger.setLevel(logging.INFO)
@@ -54,7 +55,7 @@ class Worker(QtCore.QObject):
         device = devices[0]
         for i, book in enumerate(self.iterable, 1):
             try:
-                self.kindle.download_one_book(book.asin, device, i)
+                self.kindle.download_one_book(book.asin, device, i, self.filetype)
             except Exception:
                 logger.exception("download failed")
             else:
@@ -100,25 +101,35 @@ class KindleMainDialog(QtWidgets.QDialog):
     def setup_kindle(self):
         instance = self.kindle
         instance.csrf_token = self.ui.csrfEdit.text()
-        instance.urls = kindle.KINDLE_URLS[self.getDomain()]
+        instance.urls = kindle.KINDLE_URLS[self.get_domain()]
         instance.out_dir = self.ui.outDirEdit.text()
         instance.cut_length = self.ui.cutLengthSpin.value()
         instance.total_to_download = 0
-        if self.ui.radioFromInput.isChecked():
-            instance.set_cookie_from_string(self.ui.cookieTextEdit.text())
-        else:
-            instance.set_cookie_from_browser()
+        try:
+            if self.ui.radioFromInput.isChecked():
+                instance.set_cookie_from_string(self.ui.cookieTextEdit.text())
+            else:
+                instance.set_cookie_from_browser()
+        except Exception:
+            self.on_error()
+            return
         if not instance.csrf_token:
             self.show_error("Please input CSRF token")
 
-    def getDomain(self):
+    def get_domain(self):
         if self.ui.radioCN.isChecked():
             return "cn"
         else:
             return "com"
 
+    def get_filetype(self):
+        if self.ui.radioEBOK.isChecked():
+            return "EBOK"
+        else:
+            return "PDOC"
+
     def on_login_amazon(self):
-        url = kindle.KINDLE_URLS[self.getDomain()]["bookall"]
+        url = kindle.KINDLE_URLS[self.get_domain()]["bookall"]
         webbrowser.open(url)
 
     def on_from_input(self, checked):
@@ -156,7 +167,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         iterable = self.book_model.data_to_download()
         total = len(iterable)
         self.kindle.total_to_download = total
-        self.worker = Worker(iterable, self.kindle)
+        self.worker = Worker(iterable, self.kindle, self.get_filetype())
         self.worker.moveToThread(self.thread)
         parent = self.ui.logBrowser.parent()
         self.progressbar = QtWidgets.QProgressBar(parent)
