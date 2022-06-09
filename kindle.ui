@@ -192,6 +192,13 @@ hr { height: 1px; border-width: 0; }
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QRadioButton" name="radioJP">
+               <property name="text">
+                <string>日亚(.jp)</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
