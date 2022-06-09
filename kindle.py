@@ -9,8 +9,13 @@ import re
 import json
 import urllib
 import urllib3
+import time
 
-import browsercookie
+try:
+    import browsercookie
+except:
+    browsercookie = None
+
 import requests
 import argparse
 
@@ -141,7 +146,7 @@ class Kindle:
         session.headers.update(KINDLE_HEADER)
         return session
 
-    def download_one_book(self, asin, device, index):
+    def download_one_book(self, asin, device, index, tries):
         try:
             download_url = self.urls["download"].format(
                 asin,
@@ -160,17 +165,20 @@ class Kindle:
             total_size = r.headers["Content-length"]
             out = os.path.join(self.out_dir, name)
             print(
-                f"({index}/{self.total_to_download})downloading {name} {total_size} bytes"
-            )
+                    f"INFO, ({index}/{self.total_to_download})downloading {name} {total_size} bytes")
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
-            print(f"{name} downloaded")
+            print(f"INFO, {name} downloaded")
         except Exception as e:
-            print(str(e))
-            print(f"{asin} download failed")
+            if tries > 0:
+                print(f"WARN, {asin} download failed, try again.")
+                time.sleep(5)
+                self.download_one_book(asin, device, index, tries - 1)
+            else:
+                print(f"ERROR, {asin} download failed, skipping.")
 
-    def download_books(self, start_index=0):
+    def download_books(self, start_index=0, max_tries=5):
         # use default device
         device = self.get_devices()[0]
         asins = self.get_all_asins()
@@ -179,7 +187,8 @@ class Kindle:
             print(f"recover index downloading {start_index}/{self.total_to_download}")
         index = start_index
         for asin in asins[start_index:]:
-            self.download_one_book(asin, device, index)
+            tries = max_tries
+            self.download_one_book(asin, device, index, tries)
             index += 1
 
         print(
@@ -242,6 +251,9 @@ if __name__ == "__main__":
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
-    else:
+    elif browsercookie :
         kindle.set_cookie(browsercookie.load())
+    else:
+        print("cookie required")
+        sys.exit(1)
     kindle.download_books(start_index=options.index)
