@@ -19,7 +19,7 @@ Download all your kindle books script.
 pip3 install -r requirements.txt
 ```
 
-## 使用 `amazon CN`
+## 使用 `amazon.cn` 
 
 1. 登陆 amazon.cn
 2. 访问 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/
@@ -34,6 +34,14 @@ pip3 install -r requirements.txt
 3. right click this page source then find `csrfToken` value copy
 4. run: `python3 kindle.py ${csrfToken}`
 5. if is doc file `python3 kindle.py ${csrfToken} --pdoc`
+
+## amazon.jp` を使用する
+
+1. amazon.co.jpにログインする。
+2.ホームページ（https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
+3.ソースコード上で右クリックし、`csrfToken`を検索して、それ以降の値をコピーします。
+4. `python3 kindle.py ${csrfToken} --jp` を実行する。
+5.プッシュファイルをダウンロードする場合 `python3 kindle.py ${csrfToken} --jp --pdoc`
 
 ## 自动获取 cookie
 

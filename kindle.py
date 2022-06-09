@@ -37,6 +37,11 @@ KINDLE_URLS = {
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
         "payload": "https://www.amazon.cn/hz/mycd/ajax",
     },
+    "jp": {
+        "bookall": "https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
+        "payload": "https://www.amazon.co.jp/hz/mycd/ajax",
+    },
     "com": {
         "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
@@ -241,6 +246,14 @@ if __name__ == "__main__":
         const="cn",
         default="com",
         help="if your account is an amazon.cn account",
+    )
+    parser.add_argument(
+        "--jp",
+        dest="domain",
+        action="store_const",
+        const="jp",
+        default="com",
+        help="if your account is an amazon.jp account",
     )
     parser.add_argument(
         "--resume-from",
