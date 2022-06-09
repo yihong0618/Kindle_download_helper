@@ -120,6 +120,8 @@ class KindleMainDialog(QtWidgets.QDialog):
     def get_domain(self):
         if self.ui.radioCN.isChecked():
             return "cn"
+        elif self.ui.radioJP.isChecked():
+            return "jp"
         else:
             return "com"
 
