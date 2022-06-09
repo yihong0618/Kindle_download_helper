@@ -8,7 +8,7 @@ gui_dep:
 	pip install -r requirements_gui.txt
 
 ui: gui_dep
-	pyside6-rcc ./icon.qrc -o kindle_rc.py
+	pyside6-rcc ./icon.qrc -o icon_rc.py
 	pyside6-uic ./kindle.ui -o ui_kindle.py
 
 

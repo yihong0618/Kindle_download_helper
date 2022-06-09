@@ -108,7 +108,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         instance.total_to_download = 0
         try:
             if self.ui.radioFromInput.isChecked():
-                instance.set_cookie_from_string(self.ui.cookieTextEdit.text())
+                instance.set_cookie_from_string(self.ui.cookieTextEdit.toPlainText())
             else:
                 instance.set_cookie_from_browser()
         except Exception:
@@ -201,9 +201,9 @@ class KindleMainDialog(QtWidgets.QDialog):
 
     def on_finish_download(self):
         self.ui.downloadButton.setEnabled(True)
+        QtWidgets.QMessageBox.information(self, "下载完成", "下载完成")
         self.ui.verticalLayout_7.removeWidget(self.progressbar)
         self.progressbar.deleteLater()
-        QtWidgets.QMessageBox.information(self, "下载完成", "下载完成")
 
     def on_book_done(self, idx):
         self.book_model.mark_done(idx - 1)
