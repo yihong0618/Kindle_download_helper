@@ -38,10 +38,10 @@ pip3 install -r requirements.txt
 ## amazon.jp` を使用する
 
 1. amazon.co.jpにログインする。
-2.ホームページ（https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
-3.ソースコード上で右クリックし、`csrfToken`を検索して、それ以降の値をコピーします。
+2. ホームページ https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
+3. ソースコード上で右クリックし、`csrfToken`を検索して、それ以降の値をコピーします。
 4. `python3 kindle.py ${csrfToken} --jp` を実行する。
-5.プッシュファイルをダウンロードする場合 `python3 kindle.py ${csrfToken} --jp --pdoc`
+5. プッシュファイルをダウンロードする場合 `python3 kindle.py ${csrfToken} --jp --pdoc`
 
 ## 自动获取 cookie
 
