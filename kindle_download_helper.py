@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import sys
@@ -28,6 +29,7 @@ class Book(NamedTuple):
     title: str
     author: str
     asin: str
+    filetype: str
     done: bool
 
 
@@ -54,7 +56,7 @@ class Worker(QtCore.QObject):
         device = devices[0]
         for i, book in enumerate(self.iterable, 1):
             try:
-                self.kindle.download_one_book(book.asin, device, i)
+                self.kindle.download_one_book(book.asin, device, i, book.filetype)
             except Exception:
                 logger.exception("download failed")
             else:
@@ -100,25 +102,35 @@ class KindleMainDialog(QtWidgets.QDialog):
     def setup_kindle(self):
         instance = self.kindle
         instance.csrf_token = self.ui.csrfEdit.text()
-        instance.urls = kindle.KINDLE_URLS[self.getDomain()]
+        instance.urls = kindle.KINDLE_URLS[self.get_domain()]
         instance.out_dir = self.ui.outDirEdit.text()
         instance.cut_length = self.ui.cutLengthSpin.value()
         instance.total_to_download = 0
-        if self.ui.radioFromInput.isChecked():
-            instance.set_cookie_from_string(self.ui.cookieTextEdit.text())
-        else:
-            instance.set_cookie_from_browser()
+        try:
+            if self.ui.radioFromInput.isChecked():
+                instance.set_cookie_from_string(self.ui.cookieTextEdit.toPlainText())
+            else:
+                instance.set_cookie_from_browser()
+        except Exception:
+            self.on_error()
+            return
         if not instance.csrf_token:
             self.show_error("Please input CSRF token")
 
-    def getDomain(self):
+    def get_domain(self):
         if self.ui.radioCN.isChecked():
             return "cn"
         else:
             return "com"
 
+    def get_filetype(self):
+        if self.ui.radioEBOK.isChecked():
+            return "EBOK"
+        else:
+            return "PDOC"
+
     def on_login_amazon(self):
-        url = kindle.KINDLE_URLS[self.getDomain()]["bookall"]
+        url = kindle.KINDLE_URLS[self.get_domain()]["bookall"]
         webbrowser.open(url)
 
     def on_from_input(self, checked):
@@ -137,11 +149,24 @@ class KindleMainDialog(QtWidgets.QDialog):
     def on_fetch_books(self):
         self.ui.fetchButton.setEnabled(False)
         self.setup_kindle()
+        filetype = self.get_filetype()
         try:
-            all_books = self.kindle.get_all_books()
-            book_data = [
-                [item["title"], item["authors"], item["asin"]] for item in all_books
-            ]
+            all_books = self.kindle.get_all_books(filetype)
+            if filetype == "EBOK":
+                book_data = [
+                    [item["title"], item["authors"], item["asin"], filetype]
+                    for item in all_books
+                ]
+            else:
+                book_data = [
+                    [
+                        html.unescape(item["title"]),
+                        html.unescape(item["author"]),
+                        item["asin"],
+                        filetype,
+                    ]
+                    for item in all_books
+                ]
             self.book_model.updateData(book_data)
         except Exception:
             self.on_error()
@@ -176,9 +201,9 @@ class KindleMainDialog(QtWidgets.QDialog):
 
     def on_finish_download(self):
         self.ui.downloadButton.setEnabled(True)
+        QtWidgets.QMessageBox.information(self, "下载完成", "下载完成")
         self.ui.verticalLayout_7.removeWidget(self.progressbar)
         self.progressbar.deleteLater()
-        QtWidgets.QMessageBox.information(self, "下载完成", "下载完成")
 
     def on_book_done(self, idx):
         self.book_model.mark_done(idx - 1)

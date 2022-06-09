@@ -1,6 +1,6 @@
 # Kindle_download_helper
-Download all your kindle books script.
 
+Download all your kindle books script.
 
 <img width="1661" alt="image" src="https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png">
 
@@ -8,11 +8,13 @@ Download all your kindle books script.
 
 到 [Release](https://github.com/yihong0618/Kindle_download_helper/releases) 页面查看最新版本，获取对应系统的二进制文件下载解压即可。
 
+若打开二进制遇到问题，请参考[这个 issue](https://github.com/yihong0618/Kindle_download_helper/issues/25)
 
 ## 使用命令行
 
 1. python3
 2. 安装依赖
+
 ```
 pip3 install -r requirements.txt
 ```
@@ -23,14 +25,15 @@ pip3 install -r requirements.txt
 2. 访问 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/
 3. 右键查看源码，搜索 `csrfToken` 复制后面的 value
 4. 执行 `python3 kindle.py ${csrfToken} --cn`
-4. 如果下载推送文件 `python3 kindle.py ${csrfToken} --cn --pdoc`
+5. 如果下载推送文件 `python3 kindle.py ${csrfToken} --cn --pdoc`
 
 ## how to `amazon.com`
+
 1. login amazon.com
 2. visit https://www.amazon.com/hz/mycd/myx#/home/content/booksAll/dateDsc/
 3. right click this page source then find `csrfToken` value copy
 4. run: `python3 kindle.py ${csrfToken}`
-4. if is doc file `python3 kindle.py ${csrfToken} --pdoc`
+5. if is doc file `python3 kindle.py ${csrfToken} --pdoc`
 
 ## 自动获取 cookie
 
@@ -45,6 +48,7 @@ pip3 install -r requirements.txt
 你也可以把 cookie 保存为文本文件，执行 `python3 kindle.py --cookie-file ${cookie_file} ${csrfToken}` 下载书籍。
 
 ## 注意
+
 - cookie 和 csrf token 会过期，重新刷新下 amazon 的页面就行
 - 程序会自动在命令执行的目录下创建 `DOWNLOADS` 目录，书会下载在 `DOWNLOADS` 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
@@ -53,11 +57,10 @@ pip3 install -r requirements.txt
 - 如果出现名字太长的报错可以增加: `--cut-length 80` 来截断文件名
 - 支持推送文件下载 `--pdoc`
 
-
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
 
-
 ## Enjoy
+
 ## 赞赏
 
 - 谢谢就够啦

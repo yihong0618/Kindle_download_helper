@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QGroupBox, QHBoxLayout,
     QHeaderView, QLabel, QLineEdit, QPlainTextEdit,
     QPushButton, QRadioButton, QSizePolicy, QSpinBox,
     QTableView, QTextBrowser, QVBoxLayout, QWidget)
-import kindle_rc
+import icon_rc
 
 class Ui_MainDialog(object):
     def setupUi(self, MainDialog):
@@ -38,10 +38,31 @@ class Ui_MainDialog(object):
         self.listBox.setObjectName(u"listBox")
         self.verticalLayout_5 = QVBoxLayout(self.listBox)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.fetchButton = QPushButton(self.listBox)
+        self.widget = QWidget(self.listBox)
+        self.widget.setObjectName(u"widget")
+        self.widget.setMinimumSize(QSize(0, 0))
+        self.widget.setBaseSize(QSize(0, 0))
+        self.horizontalLayout_6 = QHBoxLayout(self.widget)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.radioEBOK = QRadioButton(self.widget)
+        self.radioEBOK.setObjectName(u"radioEBOK")
+        self.radioEBOK.setChecked(True)
+
+        self.horizontalLayout_6.addWidget(self.radioEBOK)
+
+        self.radioPDO = QRadioButton(self.widget)
+        self.radioPDO.setObjectName(u"radioPDO")
+
+        self.horizontalLayout_6.addWidget(self.radioPDO)
+
+        self.fetchButton = QPushButton(self.widget)
         self.fetchButton.setObjectName(u"fetchButton")
 
-        self.verticalLayout_5.addWidget(self.fetchButton, 0, Qt.AlignRight)
+        self.horizontalLayout_6.addWidget(self.fetchButton)
+
+
+        self.verticalLayout_5.addWidget(self.widget, 0, Qt.AlignRight)
 
         self.bookView = QTableView(self.listBox)
         self.bookView.setObjectName(u"bookView")
@@ -232,7 +253,9 @@ class Ui_MainDialog(object):
     def retranslateUi(self, MainDialog):
         MainDialog.setWindowTitle(QCoreApplication.translate("MainDialog", u"Kindle \u4e0b\u8f7d\u52a9\u624b", None))
         self.listBox.setTitle(QCoreApplication.translate("MainDialog", u"\u4e0b\u8f7d\u5217\u8868", None))
-        self.fetchButton.setText(QCoreApplication.translate("MainDialog", u"\u83b7\u53d6\u4e66\u7c4d\u5217\u8868", None))
+        self.radioEBOK.setText(QCoreApplication.translate("MainDialog", u"\u7535\u5b50\u4e66", None))
+        self.radioPDO.setText(QCoreApplication.translate("MainDialog", u"\u4e2a\u4eba\u6587\u6863", None))
+        self.fetchButton.setText(QCoreApplication.translate("MainDialog", u"\u83b7\u53d6\u4e0b\u8f7d\u5217\u8868", None))
         self.label_2.setText(QCoreApplication.translate("MainDialog", u"\u76ee\u6807\u6587\u4ef6\u5939", None))
         self.outDirEdit.setText(QCoreApplication.translate("MainDialog", u"DOWNLOADS", None))
         self.browseButton.setText(QCoreApplication.translate("MainDialog", u"\u6d4f\u89c8...", None))
@@ -242,8 +265,8 @@ class Ui_MainDialog(object):
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
-"</style></head><body style=\" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Microsoft YaHei UI'; font-size:9pt;\"><br /></p></body></html>", None))
         self.settingsBox.setTitle(QCoreApplication.translate("MainDialog", u"\u8bbe\u7f6e", None))
         self.loginGroupBox.setTitle("")
         self.radioCOM.setText(QCoreApplication.translate("MainDialog", u"\u7f8e\u4e9a(.com)", None))
