@@ -1,0 +1,91 @@
+name: Make Distribution
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  make_dist:
+    name: Make Distribution File(${{ matrix.os }})
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows
+            filetag: win-x86_64
+          - os: ubuntu
+            filetag: linux-x86_64
+          - os: macos
+            filetag: macos-x86_64
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements_gui.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U -r requirements.txt -r requirements_gui.txt
+          mkdir downloads
+
+      - name: Make executable windows
+        if: matrix.os == 'windows'
+        run: |
+          mkdir downloads
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.ico kindle_download_helper.py
+
+      - name: Make executable linux
+        if: matrix.os != 'windows'
+        run: |
+          mkdir downloads
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.icns kindle_download_helper.py
+
+      - name: Make dist(MacOS)
+        if: matrix.os == 'macos'
+        run: |
+          brew install create-dmg
+          create-dmg --window-pos 200 120 --window-size 800 300 --icon-size 100 --app-drop-link 600 20 downloads/kindle-${{ matrix.filetag }}.dmg dist/kindle_download_helper.app
+
+      - name: Make dist(Windows)
+        if: matrix.os == 'windows'
+        run: |
+          Compress-Archive -Path dist\kindle_download_helper.exe -DestinationPath downloads\kindle-${{ matrix.filetag }}.zip
+
+      - name: Make dist(Linux)
+        if: matrix.os == 'ubuntu'
+        run: |
+          zip -j downloads/kindle-${{ matrix.filetag }}.zip dist/kindle_download_helper
+
+      - name: Archive Distribution Files
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: downloads/*
+
+  create_release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: make_dist
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get Dists
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*

@@ -4,6 +4,7 @@ Great Thanks
 """
 
 from http.cookies import SimpleCookie
+import logging
 import os
 import re
 import json
@@ -19,6 +20,8 @@ except:
 import requests
 import argparse
 
+logger = logging.getLogger("kindle")
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
@@ -28,15 +31,25 @@ KINDLE_HEADER = {
     "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
 }
 
+CONTENT_TYPES = {
+    "EBOK": "Ebook",
+    "PDOC": "KindlePDoc",
+}
+
 KINDLE_URLS = {
     "cn": {
         "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
-        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
         "payload": "https://www.amazon.cn/hz/mycd/ajax",
     },
+    "jp": {
+        "bookall": "https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
+        "payload": "https://www.amazon.co.jp/hz/mycd/ajax",
+    },
     "com": {
-        "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
-        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=EBOK&key={}&fsn={}&device_type={}&customerId={}",
+        "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
     },
 }
@@ -61,6 +74,12 @@ class Kindle:
         if not cookiejar:
             raise Exception("Please make sure your amazon cookie is right")
         self.session.cookies = cookiejar
+
+    def set_cookie_from_browser(self):
+        if browsercookie :
+            self.set_cookie(browsercookie.load())
+            return True
+        return False
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
@@ -105,7 +124,7 @@ class Kindle:
         devices = r.json()["GetDevices"]["devices"]
         return [device for device in devices if "deviceSerialNumber" in device]
 
-    def get_all_asins(self):
+    def get_all_books(self, filetype="EBOK"):
         """
         TODO: refactor this function
         """
@@ -118,37 +137,53 @@ class Kindle:
                     "sortIndex": "DATE",
                     "startIndex": startIndex,
                     "batchSize": batchSize,
-                    "contentType": "Ebook",
+                    "contentType": CONTENT_TYPES[filetype],
                     "itemStatus": ["Active"],
-                    "originType": ["Purchase"],
                 }
             }
         }
 
-        asins = []
+        if filetype == "EBOK":
+            payload["param"]["OwnershipData"].update(
+                {
+                    "originType": ["Purchase"],
+                }
+            )
+        else:
+            batchSize = 18
+            payload["param"]["OwnershipData"].update(
+                {
+                    "batchSize": batchSize,
+                    "isExtendedMYK": False,
+                }
+            )
+
+        books = []
         while True:
             r = self.session.post(
                 self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
             )
+            r.raise_for_status()
             result = r.json()
-            asins += [book["asin"] for book in result["OwnershipData"]["items"]]
+            books += result["OwnershipData"]["items"]
 
             if result["OwnershipData"]["hasMoreItems"]:
                 startIndex += batchSize
                 payload["param"]["OwnershipData"]["startIndex"] = startIndex
             else:
                 break
-        return asins
+        return books
 
     def make_session(self):
         session = requests.Session()
         session.headers.update(KINDLE_HEADER)
         return session
 
-    def download_one_book(self, asin, device, index, tries):
+    def download_one_book(self, asin, device, index, tries, filetype="EBOK"):
         try:
             download_url = self.urls["download"].format(
+                filetype,
                 asin,
                 device["deviceSerialNumber"],
                 device["deviceType"],
@@ -164,34 +199,34 @@ class Kindle:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
             out = os.path.join(self.out_dir, name)
-            print(
-                    f"INFO, ({index}/{self.total_to_download})downloading {name} {total_size} bytes")
+            logger.info(
+                    f"({index}/{self.total_to_download})downloading {name} {total_size} bytes")
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
-            print(f"INFO, {name} downloaded")
+            logger.info(f"{name} downloaded")
         except Exception as e:
             if tries > 0:
-                print(f"WARN, {asin} download failed, try again.")
+                logger.warn(f"{asin} [{name}] download failed, try again.")
                 time.sleep(5)
-                self.download_one_book(asin, device, index, tries - 1)
+                self.download_one_book(asin, device, index, tries - 1, filetype=filetype)
             else:
-                print(f"ERROR, {asin} download failed, skipping.")
+                logger.error(f"{asin} [{name}] download failed, skipping.")
 
-    def download_books(self, start_index=0, max_tries=5):
+    def download_books(self, start_index=0, filetype="EBOK", max_tries=5):
         # use default device
         device = self.get_devices()[0]
-        asins = self.get_all_asins()
+        asins = [book["asin"] for book in self.get_all_books(filetype=filetype)]
         self.total_to_download = len(asins) - 1
-        if start_index:
-            print(f"recover index downloading {start_index}/{self.total_to_download}")
+        if start_index > 0:
+            logger.info(f"resuming the download {start_index}/{self.total_to_download}")
         index = start_index
         for asin in asins[start_index:]:
             tries = max_tries
-            self.download_one_book(asin, device, index, tries)
+            self.download_one_book(asin, device, index, tries, filetype)
             index += 1
 
-        print(
+        logger.info(
             "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
             "(https://github.com/apprenticeharper/DeDRM_tools)\n"
             "with the following serial number to remove DRM: "
@@ -202,6 +237,9 @@ class Kindle:
 
 
 if __name__ == "__main__":
+
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
 
@@ -222,21 +260,44 @@ if __name__ == "__main__":
         help="if your account is an amazon.cn account",
     )
     parser.add_argument(
-        "--recover-index",
+        "--jp",
+        dest="domain",
+        action="store_const",
+        const="jp",
+        default="com",
+        help="if your account is an amazon.jp account",
+    )
+    parser.add_argument(
+        "--resume-from",
         dest="index",
         type=int,
         default=0,
-        help="recover-index if download failed",
+        help="resume from the index if download failed",
     )
     parser.add_argument(
         "--cut-length",
         dest="cut_length",
         type=int,
         default=100,
-        help="recover-index if download failed",
+        help="truncate the file name",
     )
     parser.add_argument(
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
+    )
+    parser.add_argument(
+        "--pdoc",
+        dest="filetype",
+        action="store_const",
+        const="PDOC",
+        default="EBOK",
+        help="to download personal documents or ebook",
+    )
+    parser.add_argument(
+            "--max-tries",
+            dest="max_tries",
+            type=int,
+            default=5,
+            help="how many times to retry download one book",
     )
 
     options = parser.parse_args()
@@ -251,9 +312,6 @@ if __name__ == "__main__":
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
-    elif browsercookie :
-        kindle.set_cookie(browsercookie.load())
     else:
-        print("cookie required")
-        sys.exit(1)
-    kindle.download_books(start_index=options.index)
+        kindle.set_cookie_from_browser()
+    kindle.download_books(start_index=options.index, filetype=options.filetype, max_tries=options.max_tries)
