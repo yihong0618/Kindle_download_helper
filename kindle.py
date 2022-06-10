@@ -119,6 +119,7 @@ class Kindle:
             logger.info(
                 "Opening the url to get cookie...You can wait for the page to finish loading and retry"
             )
+            self._csrf_token = None  # reset the token
             webbrowser.open(self.urls["bookall"])
         except Exception:
             # just do nothing
