@@ -192,7 +192,7 @@ class Kindle:
             total_size = r.headers["Content-length"]
             out = os.path.join(self.out_dir, name)
             logger.info(
-                f"({index}/{self.total_to_download})downloading {name} {total_size} bytes"
+                f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
             )
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
@@ -206,9 +206,9 @@ class Kindle:
         # use default device
         device = self.get_devices()[0]
         asins = [book["asin"] for book in self.get_all_books(filetype=filetype)]
-        self.total_to_download = len(asins) - 1
+        self.total_to_download = len(asins)
         if start_index > 0:
-            print(f"resuming the download {start_index}/{self.total_to_download}")
+            print(f"resuming the download {start_index + 1}/{self.total_to_download}")
         index = start_index
         for asin in asins[start_index:]:
             self.download_one_book(asin, device, index, filetype)
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         "--resume-from",
         dest="index",
         type=int,
-        default=0,
+        default=1,
         help="resume from the index if download failed",
     )
     parser.add_argument(
@@ -295,4 +295,4 @@ if __name__ == "__main__":
         kindle.set_cookie_from_string(options.cookie)
     else:
         kindle.set_cookie_from_browser()
-    kindle.download_books(start_index=options.index, filetype=options.filetype)
+    kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
