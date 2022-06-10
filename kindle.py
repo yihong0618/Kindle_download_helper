@@ -11,7 +11,7 @@ import os
 import re
 from http.cookies import SimpleCookie
 
-import browsercookie
+import browser_cookie3
 import requests
 import urllib3
 
@@ -71,7 +71,7 @@ class Kindle:
         self.session.cookies = cookiejar
 
     def set_cookie_from_browser(self):
-        self.set_cookie(browsercookie.load())
+        self.set_cookie(browser_cookie3.load())
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):

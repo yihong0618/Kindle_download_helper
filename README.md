@@ -45,7 +45,7 @@ pip3 install -r requirements.txt
 
 ## 自动获取 cookie
 
-如果你的运行环境是本机，项目可以使用 browsercookie 库自动从浏览器中获取 cookie。如果获取有问题，可以参考下面手动输入 cookie。
+如果你的运行环境是本机，项目可以使用 [browser-cookie3](https://github.com/borisbabic/browser_cookie3) 库自动从浏览器中获取 cookie。如果获取有问题，可以参考下面手动输入 cookie。
 
 ## 手动输入 cookie
 
