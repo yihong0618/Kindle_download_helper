@@ -23,23 +23,25 @@ pip3 install -r requirements.txt
 
 1. 登陆 amazon.cn
 2. 访问 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/
-3. 执行 `python3 kindle.py --cn`
-4. 如果下载推送文件 `python3 kindle.py --cn --pdoc`
+3. 右键查看源码，搜索 `csrfToken` 复制后面的 value
+4. 执行 `python3 kindle.py --cn`
+5. 如果下载推送文件 `python3 kindle.py --cn --pdoc`
 
 ## how to `amazon.com`
 
 1. login amazon.com
 2. visit https://www.amazon.com/hz/mycd/myx#/home/content/booksAll/dateDsc/
-3. run: `python3 kindle.py`
-4. if is doc file `python3 kindle.py --pdoc`
+3. right click this page source then find `csrfToken` value copy
+4. run: `python3 kindle.py`
+5. if is doc file `python3 kindle.py --pdoc`
 
 ## amazon.jp` を使用する
 
 1. amazon.co.jp にログインする。
 2. ホームページ https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
-3. `python3 kindle.py ${csrfToken} --jp` を実行する。
-4. プッシュファイルをダウンロードする場合 `python3 kindle.py ${csrfToken} --jp --pdoc`
-
+3. ソースコード上で右クリックし、`csrfToken`を検索して、それ以降の値をコピーします。
+4. `python3 kindle.py --jp` を実行する。
+5. プッシュファイルをダウンロードする場合 `python3 kindle.py --jp --pdoc`
 ## 自动获取 cookie
 
 如果你的运行环境是本机，项目可以使用 [browser-cookie3](https://github.com/borisbabic/browser_cookie3) 库自动从浏览器中获取 cookie。如果获取有问题，可以参考下面手动输入 cookie。
