@@ -101,9 +101,7 @@ class Kindle:
         TODO: I do not know why I have to get csrf token in the page not in this way
         maybe figure out why in the future
         """
-        r = self.session.get(
-            "https://www.amazon.cn/hz/mycd/digital-console/deviceprivacycentre"
-        )
+        r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
             raise Exception("There's not csrf token here, please check")

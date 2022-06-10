@@ -35,7 +35,7 @@ pip3 install -r requirements.txt
 
 ## amazon.jp` を使用する
 
-1. amazon.co.jpにログインする。
+1. amazon.co.jp にログインする。
 2. ホームページ https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
 3. `python3 kindle.py ${csrfToken} --jp` を実行する。
 4. プッシュファイルをダウンロードする場合 `python3 kindle.py ${csrfToken} --jp --pdoc`
@@ -52,9 +52,16 @@ pip3 install -r requirements.txt
 
 你也可以把 cookie 保存为文本文件，执行 `python3 kindle.py --cookie-file ${cookie_file}` 下载书籍。
 
-## 手动输入 csrfToken
+## 手动输入 CSRF Token
 
-或执行过程中提示获取CSRF token失败，你可以手动输入 CSRF Token。CSRF Token 可以在页面源码中找到。方法是在浏览器书籍列表页面右键点击，选择查看网页源码，再利用文本匹配工具 (Ctrl + F) 查找 `csrfToken`，将等号右边引号中的值复制出来。
+或执行过程中提示获取 CSRF token 失败，你可以手动输入 CSRF Token。CSRF Token 可以在页面源码中找到。方法是在浏览器书籍列表页面右键点击，选择查看网页源码，再利用文本匹配工具 (Ctrl + F) 查找 `csrfToken`，将等号右边引号中的值复制出来，加到命令行参数中：
+
+```
+# 手动输入 CSRF Token
+python3 kindle.py ${csrfToken}
+# 同时手动输入 cookie 和 CSRF Token
+python3 kindle.py --cookie ${cookie} ${csrfToken}
+```
 
 ## 注意
 
