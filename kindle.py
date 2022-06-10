@@ -52,11 +52,11 @@ KINDLE_URLS = {
 
 class Kindle:
     def __init__(
-        self, csrf_token, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
+        self, csrf_token=None, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
     ):
         self.session = self.make_session()
         self.urls = KINDLE_URLS[domain]
-        self.csrf_token = csrf_token
+        self._csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
         self.cut_length = cut_length
@@ -64,6 +64,16 @@ class Kindle:
     def set_cookie_from_string(self, cookie_string):
         cj = self._parse_kindle_cookie(cookie_string)
         self.set_cookie(cj)
+
+    @property
+    def csrf_token(self):
+        if not self._csrf_token:
+            self._csrf_token = self._get_csrf_token()
+        return self._csrf_token
+
+    @csrf_token.setter
+    def csrf_token(self, csrf_token):
+        self._csrf_token = csrf_token
 
     def set_cookie(self, cookiejar):
         if not cookiejar:
@@ -243,7 +253,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
-    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
+    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token", nargs="?")
 
     cookie_group = parser.add_mutually_exclusive_group()
     cookie_group.add_argument(
