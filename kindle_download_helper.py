@@ -116,8 +116,10 @@ class KindleMainDialog(QtWidgets.QDialog):
         except Exception:
             self.on_error()
             return
-        if not instance.csrf_token:
-            self.show_error("Please input CSRF token")
+        try:
+            self.kindle.csrf_token
+        except Exception:
+            self.show_error("Failed to get CSRF token, please input")
 
     def get_domain(self):
         if self.ui.radioCN.isChecked():

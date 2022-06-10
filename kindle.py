@@ -52,11 +52,11 @@ KINDLE_URLS = {
 
 class Kindle:
     def __init__(
-        self, csrf_token, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
+        self, csrf_token=None, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
     ):
         self.session = self.make_session()
         self.urls = KINDLE_URLS[domain]
-        self.csrf_token = csrf_token
+        self._csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
         self.cut_length = cut_length
@@ -64,6 +64,16 @@ class Kindle:
     def set_cookie_from_string(self, cookie_string):
         cj = self._parse_kindle_cookie(cookie_string)
         self.set_cookie(cj)
+
+    @property
+    def csrf_token(self):
+        if not self._csrf_token:
+            self._csrf_token = self._get_csrf_token()
+        return self._csrf_token
+
+    @csrf_token.setter
+    def csrf_token(self, csrf_token):
+        self._csrf_token = csrf_token
 
     def set_cookie(self, cookiejar):
         if not cookiejar:
@@ -91,13 +101,29 @@ class Kindle:
         TODO: I do not know why I have to get csrf token in the page not in this way
         maybe figure out why in the future
         """
-        r = self.session.get(
-            "https://www.amazon.cn/hz/mycd/digital-console/deviceprivacycentre"
-        )
+        r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            raise Exception("There's not csrf token here, please check")
+            self.open_book_all_page()
+            raise Exception(
+                "Can't get the csrf token, "
+                f"please refresh the page at {self.urls['bookall']} and retry"
+            )
         return match.group(1)
+
+    def open_book_all_page(self):
+        # help user open it directly.
+        import webbrowser
+
+        try:
+            logger.info(
+                "Opening the url to get cookie...You can wait for the page to finish loading and retry"
+            )
+            self._csrf_token = None  # reset the token
+            webbrowser.open(self.urls["bookall"])
+        except Exception:
+            # just do nothing
+            pass
 
     def get_devices(self):
         payload = {"param": {"GetDevices": {}}}
@@ -110,17 +136,7 @@ class Kindle:
         )
         devices = r.json()
         if devices.get("error"):
-            # help user open it directly.
-            import webbrowser
-
-            try:
-                logger.info(
-                    "Opening the url to get cookie...You can wait for the page to finish loading and retry"
-                )
-                webbrowser.open(self.urls["bookall"])
-            except:
-                # just do nothing
-                pass
+            self.open_book_all_page()
             raise Exception(
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
@@ -243,7 +259,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
-    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
+    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token", nargs="?")
 
     cookie_group = parser.add_mutually_exclusive_group()
     cookie_group.add_argument(
