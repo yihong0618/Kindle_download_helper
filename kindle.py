@@ -3,6 +3,7 @@ Note some download code from: https://github.com/sghctoma/bOOkp
 Great Thanks
 """
 
+import html
 from http.cookies import SimpleCookie
 import logging
 import os
@@ -158,7 +159,13 @@ class Kindle:
             )
             r.raise_for_status()
             result = r.json()
-            books += result["OwnershipData"]["items"]
+            items = result["OwnershipData"]["items"]
+            if filetype == "PDOC":
+                for item in items:
+                    item["title"] = html.unescape(item["title"])
+                    item["authors"] = html.unescape(item.pop("author", ""))
+
+            books.extend(items)
 
             if result["OwnershipData"]["hasMoreItems"]:
                 startIndex += batchSize
@@ -172,21 +179,18 @@ class Kindle:
         session.headers.update(KINDLE_HEADER)
         return session
 
-    def download_one_book(self, asin, device, index, filetype="EBOK"):
+    def download_one_book(self, book, device, index, filetype="EBOK"):
+        name = book["title"]
         try:
             download_url = self.urls["download"].format(
                 filetype,
-                asin,
+                book["asin"],
                 device["deviceSerialNumber"],
                 device["deviceType"],
                 device["customerId"],
             )
             r = self.session.get(download_url, verify=False, stream=True)
-            name = re.findall(
-                r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
-            )[0]
-            name = urllib.parse.unquote(name)
-            name = re.sub(r'[\\/:*?"<>|]', "_", name)
+            r.raise_for_status()
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
@@ -199,19 +203,19 @@ class Kindle:
                     f.write(chunk)
             logger.info(f"{name} downloaded")
         except Exception as e:
-            logger.info(str(e))
-            logger.info(f"{asin} download failed")
+            logger.error(str(e))
+            logger.error(f"{name} download failed")
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        asins = [book["asin"] for book in self.get_all_books(filetype=filetype)]
-        self.total_to_download = len(asins)
+        books = self.get_all_books(filetype=filetype)
+        self.total_to_download = len(books)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")
         index = start_index
-        for asin in asins[start_index:]:
-            self.download_one_book(asin, device, index, filetype)
+        for book in books[start_index:]:
+            self.download_one_book(book, device, index, filetype)
             index += 1
 
         logger.info(
