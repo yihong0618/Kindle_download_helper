@@ -104,7 +104,10 @@ class Kindle:
         r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            raise Exception("Can't get the csrf token, please provide one")
+            raise Exception(
+                "Can't get the csrf token, "
+                f"please refresh the page at {self.urls['bookall']}"
+            )
         return match.group(1)
 
     def get_devices(self):
