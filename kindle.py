@@ -3,18 +3,17 @@ Note some download code from: https://github.com/sghctoma/bOOkp
 Great Thanks
 """
 
+import argparse
 import html
-from http.cookies import SimpleCookie
+import json
 import logging
 import os
 import re
-import json
-import urllib
-import urllib3
+from http.cookies import SimpleCookie
 
 import browsercookie
 import requests
-import argparse
+import urllib3
 
 logger = logging.getLogger("kindle")
 
@@ -111,6 +110,17 @@ class Kindle:
         )
         devices = r.json()
         if devices.get("error"):
+            # help user open it directly.
+            import webbrowser
+
+            try:
+                logger.info(
+                    "Opening the url to get cookie...You can wait for the page to finish loading and retry"
+                )
+                webbrowser.open(self.urls["bookall"])
+            except:
+                # just do nothing
+                pass
             raise Exception(
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
