@@ -69,6 +69,11 @@ pip3 install -r requirements.txt
 
 ## Enjoy
 
+## 贡献
+
+1. 任何 issues PR welcome
+2. `black kindle.py`
+
 ## 赞赏
 
 - 谢谢就够啦

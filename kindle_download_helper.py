@@ -2,9 +2,10 @@ import logging
 import os
 import sys
 import traceback
-from typing import NamedTuple
 import webbrowser
-from PySide6 import QtWidgets, QtCore, QtGui
+from typing import NamedTuple
+
+from PySide6 import QtCore, QtGui, QtWidgets
 
 import kindle
 from ui_kindle import Ui_MainDialog
