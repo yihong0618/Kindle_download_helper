@@ -3,22 +3,17 @@ Note some download code from: https://github.com/sghctoma/bOOkp
 Great Thanks
 """
 
-from http.cookies import SimpleCookie
+import argparse
+import html
+import json
 import logging
 import os
 import re
-import json
-import urllib
-import urllib3
-import time
+from http.cookies import SimpleCookie
 
-try:
-    import browsercookie
-except:
-    browsercookie = None
-
+import browser_cookie3
 import requests
-import argparse
+import urllib3
 
 logger = logging.getLogger("kindle")
 
@@ -57,11 +52,11 @@ KINDLE_URLS = {
 
 class Kindle:
     def __init__(
-        self, csrf_token, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
+        self, csrf_token=None, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
     ):
         self.session = self.make_session()
         self.urls = KINDLE_URLS[domain]
-        self.csrf_token = csrf_token
+        self._csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
         self.cut_length = cut_length
@@ -70,17 +65,24 @@ class Kindle:
         cj = self._parse_kindle_cookie(cookie_string)
         self.set_cookie(cj)
 
+    @property
+    def csrf_token(self):
+        if not self._csrf_token:
+            self._csrf_token = self._get_csrf_token()
+        return self._csrf_token
+
+    @csrf_token.setter
+    def csrf_token(self, csrf_token):
+        self._csrf_token = csrf_token
+
     def set_cookie(self, cookiejar):
         if not cookiejar:
             raise Exception("Please make sure your amazon cookie is right")
         self.session.cookies = cookiejar
 
     def set_cookie_from_browser(self):
-        if browsercookie :
-            self.set_cookie(browsercookie.load())
-            return True
-        return False
-
+        self.set_cookie(browser_cookie3.load())
+        
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
         cookie = SimpleCookie()
@@ -99,13 +101,29 @@ class Kindle:
         TODO: I do not know why I have to get csrf token in the page not in this way
         maybe figure out why in the future
         """
-        r = self.session.get(
-            "https://www.amazon.cn/hz/mycd/digital-console/deviceprivacycentre"
-        )
+        r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            raise Exception("There's not csrf token here, please check")
+            self.open_book_all_page()
+            raise Exception(
+                "Can't get the csrf token, "
+                f"please refresh the page at {self.urls['bookall']} and retry"
+            )
         return match.group(1)
+
+    def open_book_all_page(self):
+        # help user open it directly.
+        import webbrowser
+
+        try:
+            logger.info(
+                "Opening the url to get cookie...You can wait for the page to finish loading and retry"
+            )
+            self._csrf_token = None  # reset the token
+            webbrowser.open(self.urls["bookall"])
+        except Exception:
+            # just do nothing
+            pass
 
     def get_devices(self):
         payload = {"param": {"GetDevices": {}}}
@@ -118,6 +136,7 @@ class Kindle:
         )
         devices = r.json()
         if devices.get("error"):
+            self.open_book_all_page()
             raise Exception(
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
@@ -166,7 +185,13 @@ class Kindle:
             )
             r.raise_for_status()
             result = r.json()
-            books += result["OwnershipData"]["items"]
+            items = result["OwnershipData"]["items"]
+            if filetype == "PDOC":
+                for item in items:
+                    item["title"] = html.unescape(item["title"])
+                    item["authors"] = html.unescape(item.pop("author", ""))
+
+            books.extend(items)
 
             if result["OwnershipData"]["hasMoreItems"]:
                 startIndex += batchSize
@@ -180,50 +205,50 @@ class Kindle:
         session.headers.update(KINDLE_HEADER)
         return session
 
-    def download_one_book(self, asin, device, index, tries, filetype="EBOK"):
+    def download_one_book(self, asin, device, index, retries, filetype="EBOK"):
+        name = book["title"]
         try:
             download_url = self.urls["download"].format(
                 filetype,
-                asin,
+                book["asin"],
                 device["deviceSerialNumber"],
                 device["deviceType"],
                 device["customerId"],
             )
             r = self.session.get(download_url, verify=False, stream=True)
-            name = re.findall(
-                r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
-            )[0]
-            name = urllib.parse.unquote(name)
-            name = re.sub(r'[\\/:*?"<>|]', "_", name)
+            r.raise_for_status()
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
             out = os.path.join(self.out_dir, name)
             logger.info(
-                    f"({index}/{self.total_to_download})downloading {name} {total_size} bytes")
+                f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
+            )
+
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
             logger.info(f"{name} downloaded")
         except Exception as e:
-            if tries > 0:
+            if retries > 0:
                 logger.warn(f"{asin} [{name}] download failed, try again.")
                 time.sleep(5)
-                self.download_one_book(asin, device, index, tries - 1, filetype=filetype)
+                self.download_one_book(asin, device, index, retries - 1, filetype=filetype)
             else:
                 logger.error(f"{asin} [{name}] download failed, skipping.")
 
-    def download_books(self, start_index=0, filetype="EBOK", max_tries=5):
+    def download_books(self, start_index=0, filetype="EBOK", max_retries=5):
         # use default device
         device = self.get_devices()[0]
-        asins = [book["asin"] for book in self.get_all_books(filetype=filetype)]
-        self.total_to_download = len(asins) - 1
+        books = self.get_all_books(filetype=filetype)
+        self.total_to_download = len(books)
         if start_index > 0:
             logger.info(f"resuming the download {start_index}/{self.total_to_download}")
         index = start_index
-        for asin in asins[start_index:]:
-            tries = max_tries
-            self.download_one_book(asin, device, index, tries, filetype)
+
+        for book in books[start_index:]:
+            retries = max_retries
+            self.download_one_book(book, device, index, retries, filetype)
             index += 1
 
         logger.info(
@@ -241,7 +266,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
-    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token")
+    parser.add_argument("csrf_token", help="amazon or amazon cn csrf token", nargs="?")
 
     cookie_group = parser.add_mutually_exclusive_group()
     cookie_group.add_argument(
@@ -271,7 +296,7 @@ if __name__ == "__main__":
         "--resume-from",
         dest="index",
         type=int,
-        default=0,
+        default=1,
         help="resume from the index if download failed",
     )
     parser.add_argument(
@@ -293,8 +318,8 @@ if __name__ == "__main__":
         help="to download personal documents or ebook",
     )
     parser.add_argument(
-            "--max-tries",
-            dest="max_tries",
+            "--max-retries",
+            dest="max_retries",
             type=int,
             default=5,
             help="how many times to retry download one book",
@@ -314,4 +339,5 @@ if __name__ == "__main__":
         kindle.set_cookie_from_string(options.cookie)
     else:
         kindle.set_cookie_from_browser()
-    kindle.download_books(start_index=options.index, filetype=options.filetype, max_tries=options.max_tries)
+
+    kindle.download_books(start_index=options.index - 1, filetype=options.filetype, max_retries=options.max_retries)

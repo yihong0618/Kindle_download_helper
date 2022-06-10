@@ -1,10 +1,11 @@
-import html
 import logging
 import os
 import sys
-from typing import NamedTuple
+import traceback
 import webbrowser
-from PySide6 import QtWidgets, QtCore, QtGui
+from typing import NamedTuple
+
+from PySide6 import QtCore, QtGui, QtWidgets
 
 import kindle
 from ui_kindle import Ui_MainDialog
@@ -54,9 +55,9 @@ class Worker(QtCore.QObject):
             self.finished.emit()
             return
         device = devices[0]
-        for i, book in enumerate(self.iterable, 1):
+        for i, book in enumerate(self.iterable):
             try:
-                self.kindle.download_one_book(book.asin, device, i, book.filetype)
+                self.kindle.download_one_book(book._asdict(), device, i, book.filetype)
             except Exception:
                 logger.exception("download failed")
             else:
@@ -97,6 +98,7 @@ class KindleMainDialog(QtWidgets.QDialog):
 
     def on_error(self):
         exc_info = sys.exc_info()
+        self.log(traceback.format_exc())
         self.show_error(f"{exc_info[0].__name__}: {exc_info[1]}")
 
     def setup_kindle(self):
@@ -114,8 +116,10 @@ class KindleMainDialog(QtWidgets.QDialog):
         except Exception:
             self.on_error()
             return
-        if not instance.csrf_token:
-            self.show_error("Please input CSRF token")
+        try:
+            self.kindle.csrf_token
+        except Exception:
+            self.show_error("Failed to get CSRF token, please input")
 
     def get_domain(self):
         if self.ui.radioCN.isChecked():
@@ -154,26 +158,19 @@ class KindleMainDialog(QtWidgets.QDialog):
         filetype = self.get_filetype()
         try:
             all_books = self.kindle.get_all_books(filetype)
-            if filetype == "EBOK":
-                book_data = [
-                    [item["title"], item["authors"], item["asin"], filetype]
-                    for item in all_books
-                ]
-            else:
-                book_data = [
-                    [
-                        html.unescape(item["title"]),
-                        html.unescape(item["author"]),
-                        item["asin"],
-                        filetype,
-                    ]
-                    for item in all_books
-                ]
+            book_data = [
+                [item["title"], item["authors"], item["asin"], filetype]
+                for item in all_books
+            ]
+
             self.book_model.updateData(book_data)
         except Exception:
             self.on_error()
         finally:
             self.ui.fetchButton.setEnabled(True)
+
+    def log(self, message):
+        self.ui.logBrowser.append(message)
 
     def on_download_books(self):
         self.setup_kindle()
@@ -193,7 +190,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
         self.worker.done.connect(self.on_book_done)
-        self.worker.logging.connect(self.ui.logBrowser.append)
+        self.worker.logging.connect(self.log)
         self.worker.progress.connect(
             lambda n: self.progressbar.setValue(round(n / total * 100, 2))
         )
