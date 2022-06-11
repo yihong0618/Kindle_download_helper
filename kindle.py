@@ -82,7 +82,7 @@ class Kindle:
 
     def set_cookie_from_browser(self):
         self.set_cookie(browser_cookie3.load())
-        
+
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
         cookie = SimpleCookie()
