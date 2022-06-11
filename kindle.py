@@ -4,10 +4,12 @@ Great Thanks
 """
 
 import argparse
+import atexit
 import html
 import json
 import logging
 import os
+import pickle
 import re
 import urllib
 from http.cookies import SimpleCookie
@@ -22,6 +24,7 @@ logger = logging.getLogger("kindle")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
+DEFAULT_SESSION_FILE = ".kindle_session"
 
 KINDLE_HEADER = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) "
@@ -54,19 +57,36 @@ KINDLE_URLS = {
 
 class Kindle:
     def __init__(
-        self, csrf_token=None, domain="cn", out_dir=DEFAULT_OUT_DIR, cut_length=100
+        self,
+        csrf_token=None,
+        domain="cn",
+        out_dir=DEFAULT_OUT_DIR,
+        cut_length=100,
+        session_file=DEFAULT_SESSION_FILE,
     ):
-        self.session = self.make_session()
         self.urls = KINDLE_URLS[domain]
         self._csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
         self.cut_length = cut_length
         self.not_done = False
+        self.session_file = session_file
+        self.session = self.make_session()
+        atexit.register(self.dump_session)
+
+    def set_cookie(self, cookiejar):
+        if not cookiejar:
+            raise Exception("Please make sure your amazon cookie is right")
+        self.session.cookies.clear()
+        self.session.cookies.update(cookiejar)
 
     def set_cookie_from_string(self, cookie_string):
         cj = self._parse_kindle_cookie(cookie_string)
         self.set_cookie(cj)
+
+    def dump_session(self):
+        with open(self.session_file, "wb") as f:
+            pickle.dump(self.session, f)
 
     @property
     def csrf_token(self):
@@ -78,13 +98,10 @@ class Kindle:
     def csrf_token(self, csrf_token):
         self._csrf_token = csrf_token
 
-    def set_cookie(self, cookiejar):
-        if not cookiejar:
-            raise Exception("Please make sure your amazon cookie is right")
-        self.session.cookies = cookiejar
-
-    def set_cookie_from_browser(self):
-        self.set_cookie(browser_cookie3.load())
+    def ensure_session_cookie(self):
+        if not self.session.cookies:
+            logger.debug("No cookie found, trying to load from browsers")
+            self.set_cookie(browser_cookie3.load())
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
@@ -107,28 +124,35 @@ class Kindle:
         r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            self.open_book_all_page()
+            self.revoke_cookie_token(open_page=True)
             raise Exception(
                 "Can't get the csrf token, "
                 f"please refresh the page at {self.urls['bookall']} and retry"
             )
         return match.group(1)
 
-    def open_book_all_page(self):
+    def revoke_cookie_token(self, open_page=False):
         # help user open it directly.
         import webbrowser
 
+        logger.info(
+            "Opening the url to get cookie...You can wait for the page to finish loading and retry"
+        )
+        self._csrf_token = None  # reset the token
+        # clear the cookies so the next time it can be reloaded from the browsers
+        self.session.cookies.clear()
+        if not open_page:
+            return
         try:
-            logger.info(
-                "Opening the url to get cookie...You can wait for the page to finish loading and retry"
-            )
-            self._csrf_token = None  # reset the token
             webbrowser.open(self.urls["bookall"])
         except Exception:
             # just do nothing
             pass
 
     def get_devices(self):
+        # This method must be called before each download, so we ensure
+        # the session cookies before it is called
+        self.ensure_session_cookie()
         payload = {"param": {"GetDevices": {}}}
         r = self.session.post(
             self.urls["payload"],
@@ -140,7 +164,7 @@ class Kindle:
         r.raise_for_status()
         devices = r.json()
         if devices.get("error"):
-            self.open_book_all_page()
+            self.revoke_cookie_token(open_page=True)
             raise Exception(
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
@@ -215,14 +239,18 @@ class Kindle:
         return books
 
     def make_session(self):
-        session = requests.Session()
-        session.headers.update(KINDLE_HEADER)
-        session.mount(
-            # will retry 5 times after 0.5, 1.0, 2.0, 4.0, ... seconds for
-            # (413, 429, 503) statuses
-            "https://",
-            HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
-        )
+        if os.path.exists(self.session_file):
+            with open(self.session_file, "rb") as f:
+                session = pickle.load(f)
+        else:
+            session = requests.Session()
+            session.headers.update(KINDLE_HEADER)
+            session.mount(
+                # will retry 5 times after 0.5, 1.0, 2.0, 4.0, ... seconds for
+                # (413, 429, 503) statuses
+                "https://",
+                HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
+            )
         return session
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
@@ -331,6 +359,12 @@ if __name__ == "__main__":
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
     )
     parser.add_argument(
+        "-s",
+        "--session-file",
+        default=DEFAULT_SESSION_FILE,
+        help="The reusable session dump file",
+    )
+    parser.add_argument(
         "--pdoc",
         dest="filetype",
         action="store_const",
@@ -344,13 +378,15 @@ if __name__ == "__main__":
     if not os.path.exists(options.outdir):
         os.makedirs(options.outdir)
     kindle = Kindle(
-        options.csrf_token, options.domain, options.outdir, options.cut_length
+        options.csrf_token,
+        options.domain,
+        options.outdir,
+        options.cut_length,
+        session_file=options.session_file,
     )
     if options.cookie_file:
         with open(options.cookie_file, "r") as f:
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
-    else:
-        kindle.set_cookie_from_browser()
     kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
