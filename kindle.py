@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import urllib
 from http.cookies import SimpleCookie
 
 import browser_cookie3
@@ -208,7 +209,7 @@ class Kindle:
         return session
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
-        name = book["title"]
+        title = book["title"]
         try:
             download_url = self.urls["download"].format(
                 filetype,
@@ -219,6 +220,11 @@ class Kindle:
             )
             r = self.session.get(download_url, verify=False, stream=True)
             r.raise_for_status()
+            name = re.findall(
+                r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
+            )[0]
+            name = urllib.parse.unquote(name)
+            name = re.sub(r'[\\/:*?"<>|]', "_", name)
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
@@ -232,7 +238,7 @@ class Kindle:
             logger.info(f"{name} downloaded")
         except Exception as e:
             logger.error(str(e))
-            logger.error(f"{name} download failed")
+            logger.error(f"{title} download failed")
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
