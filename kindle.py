@@ -141,6 +141,8 @@ class Kindle:
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
         devices = r.json()["GetDevices"]["devices"]
+        if not devices:
+            raise Exception("No devices are bound to this account")
         return [device for device in devices if "deviceSerialNumber" in device]
 
     def get_all_books(self, filetype="EBOK"):

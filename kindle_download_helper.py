@@ -115,11 +115,13 @@ class KindleMainDialog(QtWidgets.QDialog):
                 instance.set_cookie_from_browser()
         except Exception:
             self.on_error()
-            return
+            return False
         try:
             self.kindle.csrf_token
         except Exception:
             self.show_error("Failed to get CSRF token, please input")
+            return False
+        return True
 
     def get_domain(self):
         if self.ui.radioCN.isChecked():
@@ -154,7 +156,8 @@ class KindleMainDialog(QtWidgets.QDialog):
 
     def on_fetch_books(self):
         self.ui.fetchButton.setEnabled(False)
-        self.setup_kindle()
+        if not self.setup_kindle():
+            return
         filetype = self.get_filetype()
         try:
             all_books = self.kindle.get_all_books(filetype)
@@ -173,7 +176,8 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.ui.logBrowser.append(message)
 
     def on_download_books(self):
-        self.setup_kindle()
+        if not self.setup_kindle():
+            return
         if not os.path.exists(self.kindle.out_dir):
             os.makedirs(self.kindle.out_dir)
         self.thread = QtCore.QThread()
