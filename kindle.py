@@ -209,6 +209,8 @@ class Kindle:
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
         name = book["title"]
+        if not str(name).endswith('.azw3'):
+            name = name + '.azw3'
         try:
             download_url = self.urls["download"].format(
                 filetype,
