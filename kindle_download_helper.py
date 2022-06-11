@@ -155,9 +155,9 @@ class KindleMainDialog(QtWidgets.QDialog):
             self.ui.outDirEdit.setText(file_dialog.selectedFiles()[0])
 
     def on_fetch_books(self):
-        self.ui.fetchButton.setEnabled(False)
         if not self.setup_kindle():
             return
+        self.ui.fetchButton.setEnabled(False)
         filetype = self.get_filetype()
         try:
             all_books = self.kindle.get_all_books(filetype)
