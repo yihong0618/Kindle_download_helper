@@ -61,6 +61,7 @@ class Kindle:
         self.total_to_download = 0
         self.out_dir = out_dir
         self.cut_length = cut_length
+        self.not_done = False
 
     def set_cookie_from_string(self, cookie_string):
         cj = self._parse_kindle_cookie(cookie_string)
@@ -146,11 +147,11 @@ class Kindle:
             raise Exception("No devices are bound to this account")
         return [device for device in devices if "deviceSerialNumber" in device]
 
-    def get_all_books(self, filetype="EBOK"):
+    def get_all_books(self, start_index=0, filetype="EBOK"):
         """
         TODO: refactor this function
         """
-        startIndex = 0
+        startIndex = start_index
         batchSize = 100
         payload = {
             "param": {
@@ -186,7 +187,13 @@ class Kindle:
                 self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
             )
-            r.raise_for_status()
+            if r.status_code == 503:
+                # amazon limit this api
+                self.not_done = True
+                logger.error(
+                    f"Amazon api limit when this download done.\n You can add command `resume-from {startIndex}`"
+                )
+                break
             result = r.json()
             items = result["OwnershipData"]["items"]
             if filetype == "PDOC":
@@ -195,6 +202,8 @@ class Kindle:
                     item["authors"] = html.unescape(item.pop("author", ""))
 
             books.extend(items)
+            if not self.total_to_download:
+                self.total_to_download = result["OwnershipData"]["numberOfItems"]
 
             if result["OwnershipData"]["hasMoreItems"]:
                 startIndex += batchSize
@@ -243,21 +252,24 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        books = self.get_all_books(filetype=filetype)
-        self.total_to_download = len(books)
+        books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")
         index = start_index
-        for book in books[start_index:]:
+        for book in books:
             self.download_one_book(book, device, index, filetype)
             index += 1
-
-        logger.info(
-            "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
-            "(https://github.com/apprenticeharper/DeDRM_tools)\n"
-            "with the following serial number to remove DRM: "
-            + device["deviceSerialNumber"]
-        )
+        if self.not_done:
+            logger.error(
+                f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `resume-from {index}`"
+            )
+        else:
+            logger.info(
+                "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
+                "(https://github.com/apprenticeharper/DeDRM_tools)\n"
+                "with the following serial number to remove DRM: "
+                + device["deviceSerialNumber"]
+            )
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
 
