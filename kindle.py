@@ -215,10 +215,15 @@ class Kindle:
             )
             if r.status_code == 503:
                 # amazon limit this api
-                self.not_done = True
-                logger.error(
-                    f"Amazon api limit when this download done.\n You can add command `resume-from {startIndex}`"
-                )
+                if startIndex == 0:
+                    logger.error(
+                        f"Amazon api limit when this download done.\n Please run it again`"
+                    )
+                else:
+                    self.not_done = True
+                    logger.error(
+                        f"Amazon api limit when this download done.\n You can add command `resume-from {startIndex}`"
+                    )
                 break
             result = r.json()
             items = result["OwnershipData"]["items"]
