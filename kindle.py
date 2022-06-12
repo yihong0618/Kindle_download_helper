@@ -14,6 +14,7 @@ from http.cookies import SimpleCookie
 
 import browser_cookie3
 import requests
+from requests.adapters import HTTPAdapter
 import urllib3
 
 logger = logging.getLogger("kindle")
@@ -136,6 +137,7 @@ class Kindle:
                 "csrfToken": self.csrf_token,
             },
         )
+        r.raise_for_status()
         devices = r.json()
         if devices.get("error"):
             self.open_book_all_page()
@@ -215,6 +217,12 @@ class Kindle:
     def make_session(self):
         session = requests.Session()
         session.headers.update(KINDLE_HEADER)
+        session.mount(
+            # will retry 5 times after 0.5, 1.0, 2.0, 4.0, ... seconds for
+            # (413, 429, 503) statuses
+            "https://",
+            HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
+        )
         return session
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
