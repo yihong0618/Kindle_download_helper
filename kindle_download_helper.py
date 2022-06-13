@@ -111,8 +111,6 @@ class KindleMainDialog(QtWidgets.QDialog):
         try:
             if self.ui.radioFromInput.isChecked():
                 instance.set_cookie_from_string(self.ui.cookieTextEdit.toPlainText())
-            else:
-                instance.set_cookie_from_browser()
         except Exception:
             self.on_error()
             return False
