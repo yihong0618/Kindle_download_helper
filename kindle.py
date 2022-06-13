@@ -13,6 +13,7 @@ import pickle
 import re
 import urllib
 from http.cookies import SimpleCookie
+from time import sleep
 
 import browser_cookie3
 import requests
@@ -173,19 +174,15 @@ class Kindle:
             raise Exception("No devices are bound to this account")
         return [device for device in devices if "deviceSerialNumber" in device]
 
-    def get_all_books(self, start_index=0, filetype="EBOK"):
-        """
-        TODO: refactor this function
-        """
-        startIndex = start_index
-        batchSize = 100
+    def get_one_batch_books(self, start_index=0, filetype="EBOK", batchsize=18):
+
         payload = {
             "param": {
                 "OwnershipData": {
                     "sortOrder": "DESCENDING",
                     "sortIndex": "DATE",
-                    "startIndex": startIndex,
-                    "batchSize": batchSize,
+                    "startIndex": start_index,
+                    "batchSize": batchsize,
                     "contentType": CONTENT_TYPES[filetype],
                     "itemStatus": ["Active"],
                 }
@@ -193,54 +190,61 @@ class Kindle:
         }
 
         if filetype == "EBOK":
-            payload["param"]["OwnershipData"].update(
-                {
-                    "originType": ["Purchase"],
-                }
-            )
+            payload["param"]["OwnershipData"]["originType"] = ["Purchase"]
         else:
-            batchSize = 18
-            payload["param"]["OwnershipData"].update(
-                {
-                    "batchSize": batchSize,
-                    "isExtendedMYK": False,
-                }
-            )
+            payload["param"]["OwnershipData"]["isExtendedMYK"] = False,
 
+        r = self.session.post(
+            self.urls["payload"],
+            data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
+        )
+        if r.status_code == 503:
+            # amazon limit this api
+            if start_index == 0:
+                logger.error(
+                    f"Amazon api limit when this download done.\n Please run it again`"
+                )
+            else:
+                self.not_done = True
+                logger.error(
+                    f"Amazon api limit when this download done.\n You can add command `--resume-from {start_index}`"
+                )
+            raise ValueError(503)
+
+        result = r.json()
+
+        if not result["OwnershipData"]["success"]:
+            raise ValueError(503)
+
+        if filetype == "PDOC":
+            for item in result["OwnershipData"]["items"]:
+                item["title"] = html.unescape(item["title"])
+                item["authors"] = html.unescape(item.pop("author", ""))
+
+        if not self.total_to_download:
+            self.total_to_download = result["OwnershipData"]["numberOfItems"]
+
+        return result
+
+    def get_all_books(self, start_index=0, filetype="EBOK", batchsize=18, wait_secs=5):
+        """
+        TODO: refactor this function
+        """
+        startIndex = start_index
         books = []
         while True:
-            r = self.session.post(
-                self.urls["payload"],
-                data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
-            )
-            if r.status_code == 503:
-                # amazon limit this api
-                if startIndex == 0:
-                    logger.error(
-                        f"Amazon api limit when this download done.\n Please run it again`"
-                    )
-                else:
-                    self.not_done = True
-                    logger.error(
-                        f"Amazon api limit when this download done.\n You can add command `resume-from {startIndex}`"
-                    )
-                break
-            result = r.json()
-            items = result["OwnershipData"]["items"]
-            if filetype == "PDOC":
-                for item in items:
-                    item["title"] = html.unescape(item["title"])
-                    item["authors"] = html.unescape(item.pop("author", ""))
-
-            books.extend(items)
-            if not self.total_to_download:
-                self.total_to_download = result["OwnershipData"]["numberOfItems"]
-
+            try:
+                result = self.get_one_batch_books(startIndex, filetype, batchsize)
+            except ValueError as e:
+                if e.args[0] == 503:
+                    break
+            books.extend(result["OwnershipData"]["items"])
             if result["OwnershipData"]["hasMoreItems"]:
-                startIndex += batchSize
-                payload["param"]["OwnershipData"]["startIndex"] = startIndex
+                startIndex += batchsize
             else:
                 break
+            print(f"{startIndex} / {self.total_to_download}")
+            sleep(wait_secs)
         return books
 
     def make_session(self):
@@ -290,19 +294,24 @@ class Kindle:
             logger.error(str(e))
             logger.error(f"{title} download failed")
 
-    def download_books(self, start_index=0, filetype="EBOK"):
+    def download_books(self, start_index=0, filetype="EBOK", batchsize=18, wait_secs=5):
         # use default device
         device = self.get_devices()[0]
-        books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")
+
         index = start_index
-        for book in books:
-            self.download_one_book(book, device, index, filetype)
-            index += 1
+        while True:
+            result = self.get_one_batch_books(filetype=filetype, start_index=index, batchsize=batchsize)
+            books = result["OwnershipData"]["items"]
+            for book in books:
+                self.download_one_book(book, device, index, filetype)
+                index += 1
+                sleep(wait_secs)
+
         if self.not_done:
             logger.error(
-                f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `resume-from {index}`"
+                f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `--resume-from {index}`"
             )
         else:
             logger.info(
@@ -377,6 +386,20 @@ if __name__ == "__main__":
         default="EBOK",
         help="to download personal documents or ebook",
     )
+    parser.add_argument(
+        "--batch-size",
+        dest="batchsize",
+        type=int,
+        default=18,
+        help="batch size (default 18 items per page)",
+    )
+    parser.add_argument(
+        "--wait",
+        dest="wait_secs",
+        type=float,
+        default=40,
+        help="wait seconds between http requests",
+    )
 
     options = parser.parse_args()
 
@@ -394,4 +417,11 @@ if __name__ == "__main__":
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
-    kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
+
+    kindle.download_books(
+        start_index=options.index - 1,
+        filetype=options.filetype,
+        batchsize=options.batchsize,
+        wait_secs=options.wait_secs,
+    )
+

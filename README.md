@@ -74,6 +74,8 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
 - 如果出现名字太长的报错可以增加: `--cut-length 80` 来截断文件名
 - 支持推送文件下载 `--pdoc`
+- 默认每次 API 请求后等待 40 秒，若有耐心可以将参数调高 e.g. `--wait 60`。减少服务器压力，降低被服务端限制的概率。
+- 默认每个书籍列表批次包含 18 册书，这个数值模仿了网页端的行为。可以通过 `--batch-size` 按实际情况调整。
 
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
 
