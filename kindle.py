@@ -13,6 +13,7 @@ import pickle
 import re
 import urllib
 from http.cookies import SimpleCookie
+from time import sleep
 
 import browser_cookie3
 import requests
@@ -101,7 +102,7 @@ class Kindle:
     def ensure_session_cookie(self):
         if not self.session.cookies:
             logger.debug("No cookie found, trying to load from browsers")
-            self.set_cookie(browser_cookie3.load())
+            self.set_cookie(browser_cookie3.load(domain_name='amazon'))
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
@@ -131,28 +132,37 @@ class Kindle:
             )
         return match.group(1)
 
+    def refresh_browser_cookie(self, wait_secs=20):
+        import webbrowser
+        try:
+            webbrowser.open(self.urls["bookall"])
+            if wait_secs > 0:
+                # wait for browser setting cookies
+                sleep(wait_secs)
+        except Exception:
+            pass
+
     def revoke_cookie_token(self, open_page=False):
         # help user open it directly.
-        import webbrowser
-
         logger.info(
             "Opening the url to get cookie...You can wait for the page to finish loading and retry"
         )
         self._csrf_token = None  # reset the token
         # clear the cookies so the next time it can be reloaded from the browsers
         self.session.cookies.clear()
-        if not open_page:
-            return
-        try:
-            webbrowser.open(self.urls["bookall"])
-        except Exception:
-            # just do nothing
-            pass
+        if open_page:
+            self.refresh_browser_cookie()
 
     def get_devices(self):
         # This method must be called before each download, so we ensure
         # the session cookies before it is called
-        self.ensure_session_cookie()
+
+        if not self._csrf_token:
+            if not self.session.cookies:
+                self.refresh_browser_cookie()
+                self.ensure_session_cookie()
+            self._csrf_token = self._get_csrf_token()
+
         payload = {"param": {"GetDevices": {}}}
         r = self.session.post(
             self.urls["payload"],
