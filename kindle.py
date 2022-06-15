@@ -217,15 +217,19 @@ class Kindle:
                 # amazon limit this api
                 if startIndex == 0:
                     logger.error(
-                        f"Amazon api limit when this download done.\n Please run it again`"
+                        "Amazon api limit when this download done.\n Please run it again`"
                     )
                 else:
                     self.not_done = True
                     logger.error(
-                        f"Amazon api limit when this download done.\n You can add command `resume-from {startIndex}`"
+                        "Amazon api limit when this download done.\n You can add command `resume-from %s`",
+                        startIndex,
                     )
                 break
             result = r.json()
+            if not result.get("success", True):
+                logger.error("get all books error: %s", result.get("error"))
+                break
             items = result["OwnershipData"]["items"]
             if filetype == "PDOC":
                 for item in items:
