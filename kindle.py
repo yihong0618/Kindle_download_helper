@@ -15,7 +15,10 @@ import urllib
 from http.cookies import SimpleCookie
 from time import sleep
 
-import browser_cookie3
+try:
+    import browser_cookie3
+except:
+    print("not found browser_cookie3 here, you should use --cookie command")
 import requests
 from requests.adapters import HTTPAdapter
 import urllib3
@@ -102,7 +105,10 @@ class Kindle:
     def ensure_session_cookie(self):
         if not self.session.cookies:
             logger.debug("No cookie found, trying to load from browsers")
-            self.set_cookie(browser_cookie3.load(domain_name='amazon'))
+            try:
+                self.set_cookie(browser_cookie3.load(domain_name="amazon"))
+            except:
+                print("not found browser_cookie3 here, you should use --cookie command")
 
     @staticmethod
     def _parse_kindle_cookie(kindle_cookie):
@@ -134,10 +140,12 @@ class Kindle:
 
     def refresh_browser_cookie(self, wait_secs=20):
         import webbrowser
+
         try:
             webbrowser.open(self.urls["bookall"])
             if wait_secs > 0:
                 # wait for browser setting cookies
+                logger.info(f"Will sleep for {wait_secs} please wait")
                 sleep(wait_secs)
         except Exception:
             pass
@@ -187,6 +195,11 @@ class Kindle:
         """
         TODO: refactor this function
         """
+        # some info
+        if filetype == "PDOC":
+            logger.info(
+                "It will take some time to get all PDOC books list, please wait"
+            )
         startIndex = start_index
         batchSize = 100
         payload = {
