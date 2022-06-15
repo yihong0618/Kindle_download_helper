@@ -136,9 +136,8 @@ class Kindle:
         import webbrowser
         try:
             webbrowser.open(self.urls["bookall"])
-            if 0 < wait_secs:
+            if wait_secs > 0:
                 # wait for browser setting cookies
-                # on mac, user may need time to input password ...
                 sleep(wait_secs)
         except Exception:
             pass
