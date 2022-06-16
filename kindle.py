@@ -161,6 +161,9 @@ class Kindle:
                 self.refresh_browser_cookie()
                 self.ensure_session_cookie()
             self._csrf_token = self._get_csrf_token()
+        logger.debug(
+            f"session-id: { self.session.cookies.get_dict().get('session-id') }"
+        )
 
     def get_devices(self):
         # This method must be called before each download, so we ensure
@@ -341,7 +344,8 @@ class Kindle:
 
 if __name__ == "__main__":
 
-    logger.setLevel(logging.INFO)
+    logger.setLevel(os.environ.get('LOGGING_LEVEL', "INFO"))
+
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token", nargs="?")
