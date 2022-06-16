@@ -75,6 +75,7 @@ class Kindle:
         self.not_done = False
         self.session_file = session_file
         self.session = self.make_session()
+        self.is_browser_cookie = False
         atexit.register(self.dump_session)
 
     def set_cookie(self, cookiejar):
@@ -130,7 +131,7 @@ class Kindle:
         r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            self.revoke_cookie_token(open_page=True)
+            self.revoke_cookie_token(open_page=self.is_browser_cookie)
             raise Exception(
                 "Can't get the csrf token, "
                 f"please refresh the page at {self.urls['bookall']} and retry"
@@ -422,4 +423,7 @@ if __name__ == "__main__":
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
+    else:
+        kindle.is_browser_cookie = True
+
     kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
