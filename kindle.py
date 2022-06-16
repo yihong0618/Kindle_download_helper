@@ -13,7 +13,6 @@ import pickle
 import re
 import urllib
 from http.cookies import SimpleCookie
-from time import sleep
 
 try:
     import browser_cookie3
@@ -138,15 +137,10 @@ class Kindle:
             )
         return match.group(1)
 
-    def refresh_browser_cookie(self, wait_secs=20):
+    def refresh_browser_cookie(self):
         import webbrowser
-
         try:
             webbrowser.open(self.urls["bookall"])
-            if wait_secs > 0:
-                # wait for browser setting cookies
-                logger.info(f"Will sleep for {wait_secs} please wait")
-                sleep(wait_secs)
         except Exception:
             pass
 
@@ -161,15 +155,18 @@ class Kindle:
         if open_page:
             self.refresh_browser_cookie()
 
-    def get_devices(self):
-        # This method must be called before each download, so we ensure
-        # the session cookies before it is called
-
+    def ensure_cookie_token(self):
         if not self._csrf_token:
             if not self.session.cookies:
                 self.refresh_browser_cookie()
                 self.ensure_session_cookie()
             self._csrf_token = self._get_csrf_token()
+
+    def get_devices(self):
+        # This method must be called before each download, so we ensure
+        # the session cookies before it is called
+
+        self.ensure_cookie_token()
 
         payload = {"param": {"GetDevices": {}}}
         r = self.session.post(
