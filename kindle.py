@@ -13,7 +13,6 @@ import pickle
 import re
 import urllib
 from http.cookies import SimpleCookie
-from time import sleep
 
 try:
     import browser_cookie3
@@ -76,6 +75,7 @@ class Kindle:
         self.not_done = False
         self.session_file = session_file
         self.session = self.make_session()
+        self.is_browser_cookie = False
         atexit.register(self.dump_session)
 
     def set_cookie(self, cookiejar):
@@ -131,22 +131,17 @@ class Kindle:
         r = self.session.get(self.urls["bookall"])
         match = re.search(r'var csrfToken = "(.*)";', r.text)
         if not match:
-            self.revoke_cookie_token(open_page=True)
+            self.revoke_cookie_token(open_page=self.is_browser_cookie)
             raise Exception(
                 "Can't get the csrf token, "
                 f"please refresh the page at {self.urls['bookall']} and retry"
             )
         return match.group(1)
 
-    def refresh_browser_cookie(self, wait_secs=20):
+    def refresh_browser_cookie(self):
         import webbrowser
-
         try:
             webbrowser.open(self.urls["bookall"])
-            if wait_secs > 0:
-                # wait for browser setting cookies
-                logger.info(f"Will sleep for {wait_secs} please wait")
-                sleep(wait_secs)
         except Exception:
             pass
 
@@ -161,15 +156,21 @@ class Kindle:
         if open_page:
             self.refresh_browser_cookie()
 
-    def get_devices(self):
-        # This method must be called before each download, so we ensure
-        # the session cookies before it is called
-
+    def ensure_cookie_token(self):
         if not self._csrf_token:
             if not self.session.cookies:
                 self.refresh_browser_cookie()
                 self.ensure_session_cookie()
             self._csrf_token = self._get_csrf_token()
+        logger.debug(
+            f"session-id: { self.session.cookies.get_dict().get('session-id') }"
+        )
+
+    def get_devices(self):
+        # This method must be called before each download, so we ensure
+        # the session cookies before it is called
+
+        self.ensure_cookie_token()
 
         payload = {"param": {"GetDevices": {}}}
         r = self.session.post(
@@ -344,7 +345,8 @@ class Kindle:
 
 if __name__ == "__main__":
 
-    logger.setLevel(logging.INFO)
+    logger.setLevel(os.environ.get('LOGGING_LEVEL', "INFO"))
+
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
     parser.add_argument("csrf_token", help="amazon or amazon cn csrf token", nargs="?")
@@ -421,4 +423,7 @@ if __name__ == "__main__":
             kindle.set_cookie_from_string(f.read())
     elif options.cookie:
         kindle.set_cookie_from_string(options.cookie)
+    else:
+        kindle.is_browser_cookie = True
+
     kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
