@@ -20,7 +20,7 @@ pip3 install -r requirements.txt
 ```
 
 
-## 目前推荐手动输入 cookie 及 csrfToken (同时)
+## 目前推荐手动输入 cookie
 
 ### 手动输入 cookie
 
@@ -79,6 +79,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
 - 如果出现名字太长的报错可以增加: `--cut-length 80` 来截断文件名
 - 支持推送文件下载 `--pdoc`
+- error log 记录在 .error_books.log 中 
 
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
 

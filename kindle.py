@@ -23,6 +23,9 @@ from requests.adapters import HTTPAdapter
 import urllib3
 
 logger = logging.getLogger("kindle")
+fh = logging.FileHandler(".error_books.log")
+fh.setLevel(logging.ERROR)
+logger.addHandler(fh)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -140,6 +143,7 @@ class Kindle:
 
     def refresh_browser_cookie(self):
         import webbrowser
+
         try:
             webbrowser.open(self.urls["bookall"])
         except Exception:
@@ -167,9 +171,10 @@ class Kindle:
         )
 
     def get_devices(self):
-        # This method must be called before each download, so we ensure
-        # the session cookies before it is called
-
+        """
+        This method must be called before each download, so we ensure
+        the session cookies before it is called
+        """
         self.ensure_cookie_token()
 
         payload = {"param": {"GetDevices": {}}}
@@ -288,10 +293,11 @@ class Kindle:
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
         title = book["title"]
+        asin = book["asin"]
         try:
             download_url = self.urls["download"].format(
                 filetype,
-                book["asin"],
+                asin,
                 device["deviceSerialNumber"],
                 device["deviceType"],
                 device["customerId"],
@@ -316,7 +322,7 @@ class Kindle:
             logger.info(f"{name} downloaded")
         except Exception as e:
             logger.error(str(e))
-            logger.error(f"{title} download failed")
+            logger.error(f"Title: {title}, Asin: {asin} download failed")
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
@@ -345,7 +351,7 @@ class Kindle:
 
 if __name__ == "__main__":
 
-    logger.setLevel(os.environ.get('LOGGING_LEVEL', "INFO"))
+    logger.setLevel(os.environ.get("LOGGING_LEVEL", "INFO"))
 
     logger.addHandler(logging.StreamHandler())
     parser = argparse.ArgumentParser()
