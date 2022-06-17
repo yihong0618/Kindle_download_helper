@@ -79,6 +79,7 @@ class Kindle:
         self.session_file = session_file
         self.session = self.make_session()
         self.is_browser_cookie = False
+        self.to_resolve_duplicate_names = False
         atexit.register(self.dump_session)
 
     def set_cookie(self, cookiejar):
@@ -309,6 +310,9 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
+            ##### if you have many duplicate name books #####
+            if self.to_resolve_duplicate_names:
+                name = f"{asin}_{name}"
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
@@ -412,6 +416,12 @@ if __name__ == "__main__":
         default="EBOK",
         help="to download personal documents or ebook",
     )
+    parser.add_argument(
+        "--resolve_duplicate_names",
+        dest="resolve_duplicate_names",
+        action="store_true",
+        help="Resolve duplicate names files to download",
+    )
 
     options = parser.parse_args()
 
@@ -424,6 +434,7 @@ if __name__ == "__main__":
         options.cut_length,
         session_file=options.session_file,
     )
+    kindle.to_resolve_duplicate_names = options.resolve_duplicate_names
     if options.cookie_file:
         with open(options.cookie_file, "r") as f:
             kindle.set_cookie_from_string(f.read())
