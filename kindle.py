@@ -581,6 +581,13 @@ if __name__ == "__main__":
         help="If only generate kindle readme stats",
     )
 
+    parser.add_argument(
+        "--list",
+        dest="list_only",
+        action="store_true",
+        help="just list books/pdoc, nnot to download",
+    )
+
     options = parser.parse_args()
 
     if not os.path.exists(options.outdir):
@@ -600,6 +607,13 @@ if __name__ == "__main__":
         kindle.set_cookie_from_string(options.cookie)
     else:
         kindle.is_browser_cookie = True
+
+
+    if options.list_only:
+        kindle.get_devices()
+        for book in kindle.get_all_books(filetype=options.filetype):
+            print (book['title'])
+        exit()
 
     if options.readme:
         # generate readme stats
