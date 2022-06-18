@@ -331,6 +331,7 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
+        logger.info(f"Using default device serial Number: {device['deviceSerialNumber']}")
         books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")

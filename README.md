@@ -10,17 +10,17 @@ Download all your kindle books script.
 
 若打开二进制遇到问题，请参考[这个 issue](https://github.com/yihong0618/Kindle_download_helper/issues/25)
 
-## 使用命令行
+## Cli 
 
 1. python3
-2. 安装依赖
+2. requirements
 
 ```
 pip3 install -r requirements.txt
 ```
 
 
-## 目前推荐手动输入 cookie
+## 推荐手动输入 cookie
 
 ### 手动输入 cookie
 
@@ -35,9 +35,9 @@ pip3 install -r requirements.txt
 或执行过程中提示获取 CSRF token 失败，你可以手动输入 CSRF Token。CSRF Token 可以在页面源码中找到。方法是在浏览器书籍列表页面右键点击，选择查看网页源码，再利用文本匹配工具 (Ctrl + F) 查找 `csrfToken`，将等号右边引号中的值复制出来，加到命令行参数中：
 
 ```
-# 手动输入 CSRF Token
+# CSRF Token
 python3 kindle.py ${csrfToken}
-# 同时手动输入 cookie 和 CSRF Token
+# Both cookie and CSRF Token
 python3 kindle.py --cookie ${cookie} ${csrfToken}
 ```
 
@@ -61,7 +61,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 4. run: `python3 kindle.py`
 5. if is doc file `python3 kindle.py --pdoc`
 
-### amazon.jp` を使用する
+### `amazon.jp` を使用する
 
 1. amazon.co.jp にログインする。
 2. ホームページ https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/）にアクセスする。
@@ -82,12 +82,25 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - 如果有很多同名 pdoc 或 book 可以使用 `--resolve_duplicate_names` 解决同名冲突
 - error log 记录在 .error_books.log 中
 
+## Note
+
+- The cookie and csrf token will expire, just refresh the amazon page again.
+- The program will automatically create `DOWNLOADS` directory under the command execution directory, the book will be downloaded in `DOWNLOADS` directory.
+- If you use [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) to decrypt the key, it will be stored in key.txt
+- or just drag it into Calibre. Please google it.
+- If the process fails you can use e.g. `--resume-from ${num}`
+- If the name is too long, you can add: `-cut-length 80` to truncate the file name
+- Support push file download `--pdoc`
+- If there are many pdocs or books with the same name, you can use `--resolve_duplicate_names` to resolve conflicts with the same name.
+- error log is logged in .error_books.log
+
+
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
 
 
 ## 贡献
 
-1. 任何 issues PR welcome
+1. Any issues PR welcome
 2. `black kindle.py`
 
 ## 赞赏
