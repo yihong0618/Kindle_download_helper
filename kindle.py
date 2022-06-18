@@ -454,12 +454,17 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
+
+            _, extname = os.path.splitext(name)
+            name = title + extname
+
             ##### if you have many duplicate name books #####
             if self.to_resolve_duplicate_names:
                 name = f"{asin}_{name}"
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
+
             out = os.path.join(self.out_dir, name)
             logger.info(
                 f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
