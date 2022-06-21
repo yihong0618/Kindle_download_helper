@@ -47,18 +47,52 @@ KINDLE_URLS = {
         "bookall": "https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}&authPool=AmazonCN",
         "payload": "https://www.amazon.cn/hz/mycd/ajax",
+        "insights": "https://www.amazon.cn/kindle/reading/insights/data",
+        "book_url": "https://www.amazon.cn/dp/{book_id}",
     },
     "jp": {
         "bookall": "https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.co.jp/hz/mycd/ajax",
+        "insights": "https://www.amazon.co.jp/kindle/reading/insights/data",
+        "book_url": "https://www.amazon.co.jp/dp/{book_id}",
     },
     "com": {
         "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
+        "insights": "https://www.amazon.cn/kindle/reading/insights/data",
+        "book_url": "https://www.amazon.com/dp/{book_id}",
     },
 }
+
+# for kindle stats
+GITHUB_README_COMMENTS = (
+    "(<!--START_SECTION:{name}-->\n)(.*)(<!--END_SECTION:{name}-->\n)"
+)
+MY_KINDLE_STATS_INFO_HEAD = "## My Kindle Stats\n"
+MY_KINDLE_STATS_INFO = "- I bought {books_len} books\n \
+- I pushed {pdocs_len} docks\n \
+- My first book is {first_book_title}, bought on {first_book_bought_date}\n \
+- My first doc is {first_doc_title}, bought on {first_doc_push_date}\n\n"
+
+KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Read | \n | ---- | ---- | ---- | ---- | ---- |\n"
+KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {read} |\n"
+
+
+def replace_readme_comments(file_name, comment_str, comments_name):
+    with open(file_name, "r+") as f:
+        text = f.read()
+        # regrex sub from github readme comments
+        text = re.sub(
+            GITHUB_README_COMMENTS.format(name=comments_name),
+            r"\1{}\n\3".format(comment_str),
+            text,
+            flags=re.DOTALL,
+        )
+        f.seek(0)
+        f.write(text)
+        f.truncate()
 
 
 class Kindle:
@@ -80,6 +114,8 @@ class Kindle:
         self.session = self.make_session()
         self.is_browser_cookie = False
         self.to_resolve_duplicate_names = False
+        self.books_info_dict = {}
+        self.file_type_list = ["EBOOK", "PDOC"]
         atexit.register(self.dump_session)
 
     def set_cookie(self, cookiejar):
@@ -171,6 +207,21 @@ class Kindle:
             f"session-id: { self.session.cookies.get_dict().get('session-id') }"
         )
 
+    def make_session(self):
+        if os.path.exists(self.session_file):
+            with open(self.session_file, "rb") as f:
+                session = pickle.load(f)
+        else:
+            session = requests.Session()
+            session.headers.update(KINDLE_HEADER)
+            session.mount(
+                # will retry 5 times after 0.5, 1.0, 2.0, 4.0, ... seconds for
+                # (413, 429, 503) statuses
+                "https://",
+                HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
+            )
+        return session
+
     def get_devices(self):
         """
         This method must be called before each download, so we ensure
@@ -261,10 +312,12 @@ class Kindle:
                 logger.error("get all books error: %s", result.get("error"))
                 break
             items = result["OwnershipData"]["items"]
-            if filetype == "PDOC":
-                for item in items:
+            for item in items:
+                if filetype == "PDOC":
                     item["title"] = html.unescape(item["title"])
                     item["authors"] = html.unescape(item.pop("author", ""))
+                if item.get("readStatus", "") == "READ":
+                    self.books_info_dict[item["asin"]] = item
 
             books.extend(items)
             if not self.total_to_download:
@@ -277,20 +330,74 @@ class Kindle:
                 break
         return books
 
-    def make_session(self):
-        if os.path.exists(self.session_file):
-            with open(self.session_file, "rb") as f:
-                session = pickle.load(f)
-        else:
-            session = requests.Session()
-            session.headers.update(KINDLE_HEADER)
-            session.mount(
-                # will retry 5 times after 0.5, 1.0, 2.0, 4.0, ... seconds for
-                # (413, 429, 503) statuses
-                "https://",
-                HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
+    def _get_reading_stats(self):
+        insights_url = self.urls["insights"]
+        r = self.session.get(insights_url)
+        if r.ok:
+            return r.json()
+        logger.error(f"Something is wrong get the stats data url: {insights_url}")
+        raise Exception(f"Something is wrong get the stats data url: {insights_url}")
+
+    def _make_one_book_stats_info(self, book_info):
+        book_url = self.urls["book_url"]
+        asin = book_info["asin"]
+        book = self.books_info_dict.get(asin)
+        book_title = book.get("title", "")
+        # filter the brackets in the book title
+        book_title = re.sub(
+            r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)", "", book_title
+        )
+        book_title = book_title.replace(" ", "")
+        if book.get("category", "") == "KindleEBook":
+            book_url = book_url.format(book_id=asin)
+            book_title = f"[{book_title}]({book_url})"
+        book_authors = book.get("authors")
+        if len(book_authors) > 10:
+            book_authors = ",".join(book_authors.split(",")[:2]) + "..."
+        # only keep date
+        read = book_info.get("date_read")[:10]
+        acquired = (
+            book.get("acquiredDate", "")
+            .replace("年", "-")
+            .replace("月", "-")
+            .replace("日", "")
+        )
+        return book_title, book_authors, acquired, read
+
+    def make_kindle_stats_readme(self):
+        reading_stats = self._get_reading_stats()
+        read_list = reading_stats.get("goal_info", {}).get("titles_read")
+        ebooks = self.get_all_books(filetype="EBOK")
+        pdocs = self.get_all_books(filetype="PDOC")
+        first_ebook, first_pdoc = ebooks[-1], pdocs[-1]
+        print(len(self.books_info_dict.keys()), first_ebook, first_pdoc)
+        print(read_list)
+
+        s = MY_KINDLE_STATS_INFO_HEAD
+        kindle_stats_str = MY_KINDLE_STATS_INFO.format(
+            books_len=len(ebooks),
+            pdocs_len=len(pdocs),
+            first_book_title=first_ebook["title"],
+            first_book_bought_date=first_ebook["acquiredDate"],
+            first_doc_title=first_pdoc["title"],
+            first_doc_push_date=first_pdoc["acquiredDate"],
+        )
+        s += kindle_stats_str
+        s += KINDLE_TABLE_HEAD
+        index = 1
+        for book_info in read_list:
+            book_title, book_authors, acquired, read = self._make_one_book_stats_info(
+                book_info
             )
-        return session
+            s += KINDLE_STAT_TEMPLATE.format(
+                id=str(index),
+                title=book_title,
+                authors=book_authors,
+                acquired=acquired,
+                read=read,
+            )
+            index += 1
+        replace_readme_comments("my_kindle_stats.md", s, "my_kindle")
 
     def download_one_book(self, book, device, index, filetype="EBOK"):
         title = book["title"]
@@ -331,7 +438,9 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        logger.info(f"Using default device serial Number: {device['deviceSerialNumber']}")
+        logger.info(
+            f"Using default device serial Number: {device['deviceSerialNumber']}"
+        )
         books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")
@@ -423,6 +532,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Resolve duplicate names files to download",
     )
+    parser.add_argument(
+        "--readme",
+        dest="readme",
+        action="store_true",
+        help="If only generate kindle readme stats",
+    )
 
     options = parser.parse_args()
 
@@ -444,4 +559,8 @@ if __name__ == "__main__":
     else:
         kindle.is_browser_cookie = True
 
-    kindle.download_books(start_index=options.index - 1, filetype=options.filetype)
+    if options.readme:
+        # generate readme stats
+        kindle.make_kindle_stats_readme()
+    else:
+        kindle.download_books(start_index=options.index - 1, filetype=options.filetype)

@@ -81,6 +81,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - 支持推送文件下载 `--pdoc`
 - 如果有很多同名 pdoc 或 book 可以使用 `--resolve_duplicate_names` 解决同名冲突
 - error log 记录在 .error_books.log 中
+- 支持生成最近读完书的 README `--readme` 生成的文件在 `my_kindle_stats.md` 中
 
 ## Note
 
