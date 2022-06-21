@@ -4,6 +4,11 @@ Download all your kindle books script.
 
 <img width="1661" alt="image" src="https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png">
 
+Use `--readme` command to generate readme file to memory your kindle journey.
+
+<img width="1120" alt="image" src="https://user-images.githubusercontent.com/15976103/174820597-5aca1065-8d39-4853-b89d-1b6fce658a98.png">
+
+
 ## 下载二进制文件
 
 到 [Release](https://github.com/yihong0618/Kindle_download_helper/releases) 页面查看最新版本，获取对应系统的二进制文件下载解压即可。
