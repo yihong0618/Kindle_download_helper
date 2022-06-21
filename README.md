@@ -94,6 +94,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - Support push file download `--pdoc`
 - If there are many pdocs or books with the same name, you can use `--resolve_duplicate_names` to resolve conflicts with the same name.
 - error log is logged in .error_books.log
+- Support for generating READMEs of recently finished books `--readme` generated files are in `my_kindle_stats.md`
 
 
 <img width="1045" alt="image" src="https://user-images.githubusercontent.com/15976103/172113475-92862b57-bb39-4cd7-84d5-6bc428172bc4.png">
