@@ -74,7 +74,7 @@ MY_KINDLE_STATS_INFO_HEAD = "## My Kindle Stats\n"
 MY_KINDLE_STATS_INFO = "- I bought {books_len} books\n \
 - I pushed {pdocs_len} docks\n \
 - My first book is {first_book_title}, bought on {first_book_bought_date}\n \
-- My first doc is {first_doc_title}, bought on {first_doc_push_date}\n\n"
+- My first doc is {first_doc_title}, pushed on {first_doc_push_date}\n\n"
 
 KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Read | \n | ---- | ---- | ---- | ---- | ---- |\n"
 KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {read} |\n"
