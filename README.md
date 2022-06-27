@@ -17,7 +17,7 @@ Use `--readme` command to generate readme file to memory your kindle journey.
 
 ## 无法下载问题
 
-触发了亚马逊风控见 #69
+触发了亚马逊风控见 [issue](https://github.com/yihong0618/Kindle_download_helper/issues/69)
 
 ## Cli 
 
