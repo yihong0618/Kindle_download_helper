@@ -14,6 +14,7 @@ import re
 import time
 import urllib
 from http.cookies import SimpleCookie
+from faker import Faker
 
 try:
     import browser_cookie3
@@ -35,8 +36,7 @@ DEFAULT_SESSION_FILE = ".kindle_session"
 
 
 KINDLE_HEADER = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) "
-    "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
+    "User-Agent": Faker().user_agent(),
 }
 
 CONTENT_TYPES = {
@@ -222,6 +222,10 @@ class Kindle:
                 "https://",
                 HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
             )
+
+        logger.debug(
+            f"user-agent: { session.headers.get('User-Agent') }"
+        )
         return session
 
     def get_devices(self):
