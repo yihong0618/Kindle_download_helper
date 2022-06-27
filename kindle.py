@@ -11,6 +11,7 @@ import logging
 import os
 import pickle
 import re
+import time
 import urllib
 from http.cookies import SimpleCookie
 
@@ -31,6 +32,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
 DEFAULT_SESSION_FILE = ".kindle_session"
+
 
 KINDLE_HEADER = {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) "
@@ -245,6 +247,9 @@ class Kindle:
                 f"Error: {devices.get('error')}, please visit {self.urls['bookall']} to revoke the csrftoken and cookie"
             )
         devices = r.json()["GetDevices"]["devices"]
+        # sleep get device first time.
+        logger.info("Amazon open their bot check will sleep 6s")
+        time.sleep(6)
         if not devices:
             raise Exception("No devices are bound to this account")
         return [device for device in devices if "deviceSerialNumber" in device]
@@ -289,24 +294,56 @@ class Kindle:
             )
 
         books = []
+        ### added by yihong0618 2022.06.27
+        ### this ugly code is for amazon open their bot check
+        ### if the bot check close
+        ### will delete the try and try code
+        break_times = 0
         while True:
+            # anyway sleep 1.5
+            time.sleep(1.5)
             r = self.session.post(
                 self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
             )
             if r.status_code == 503:
-                # amazon limit this api
-                if startIndex == 0:
-                    logger.error(
-                        "Amazon api limit when this download done.\n Please run it again`"
-                    )
-                else:
-                    self.not_done = True
-                    logger.error(
-                        "Amazon api limit when this download done.\n You can add command `resume-from %s`",
-                        startIndex,
-                    )
-                break
+                # sleep and try again
+                sleep_seconds = 5 + 2 * break_times 
+                time.sleep(sleep_seconds)
+                logger.info(
+                    f"Amazon open their bot check will sleep {sleep_seconds}s and try this api again, now index: {startIndex}/{self.total_to_download}"
+                )
+                if break_times < 7:
+                    break_times += 1
+                r = self.session.post(
+                    self.urls["payload"],
+                    data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
+                )
+                if not r.ok:
+                    if r.status_code == 503:
+                        time.sleep(sleep_seconds)
+                        logger.info(
+                            f"Amazon open their bot check will sleep {sleep_seconds}s last time and try this api again, now index: {startIndex}/{self.total_to_download}"
+                        )
+                        logger.info(f"Next time fail will break the loop")
+                        r = self.session.post(
+                            self.urls["payload"],
+                            data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
+                        )
+                        break_times += 1
+                    if not r.ok:
+                        # amazon limit this api
+                        if startIndex == 0:
+                            logger.error(
+                                "Amazon api limit when this download done.\n Please run it again`"
+                            )
+                        else:
+                            self.not_done = True
+                            logger.error(
+                                "Amazon api limit when this download done.\n You can add command `resume-from %s`",
+                                startIndex,
+                            )
+                        break
             result = r.json()
             if not result.get("success", True):
                 logger.error("get all books error: %s", result.get("error"))
@@ -450,7 +487,7 @@ class Kindle:
             index += 1
         if self.not_done:
             logger.error(
-                f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `resume-from {index}`"
+                f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `--resume-from {index}` to resume download next time"
             )
         else:
             logger.info(
