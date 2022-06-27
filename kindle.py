@@ -340,7 +340,7 @@ class Kindle:
                         else:
                             self.not_done = True
                             logger.error(
-                                "Amazon api limit when this download done.\n You can add command `resume-from %s`",
+                                "Amazon api limit when this download done.\n You can add command `--resume-from %s`",
                                 startIndex,
                             )
                         break
