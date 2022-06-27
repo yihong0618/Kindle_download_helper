@@ -33,7 +33,7 @@ DEFAULT_OUT_DIR = "DOWNLOADS"
 DEFAULT_SESSION_FILE = ".kindle_session"
 
 KINDLE_HEADER = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) "
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) "
     "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
 }
 

@@ -15,6 +15,10 @@ Use `--readme` command to generate readme file to memory your kindle journey.
 
 若打开二进制遇到问题，请参考[这个 issue](https://github.com/yihong0618/Kindle_download_helper/issues/25)
 
+## 无法下载问题
+
+触发了亚马逊风控见 #69
+
 ## Cli 
 
 1. python3
