@@ -110,8 +110,14 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 1. Any issues PR welcome
 2. `black kindle.py`
 
+## 感谢
+
+- @[Kindle](https://zh.m.wikipedia.org/zh/Kindle)
+- @[frostming](https://github.com/frostming) GUI and a lot of work
+- @[bladewang](https://github.com/bladewang) PDOC download
+
 ## 赞赏
 
-- 谢谢就够啦
+- 谢谢就够了
 
 ## Enjoy
