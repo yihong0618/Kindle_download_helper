@@ -589,7 +589,7 @@ if __name__ == "__main__":
         "--list",
         dest="list_only",
         action="store_true",
-        help="just list books/pdoc, nnot to download",
+        help="just list books/pdoc, not to download",
     )
 
     options = parser.parse_args()
