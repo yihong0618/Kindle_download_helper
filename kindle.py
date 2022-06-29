@@ -615,7 +615,7 @@ if __name__ == "__main__":
 
     if options.list_only:
         kindle.get_devices()
-        print(json.dumps(kindle.get_all_books(filetype=options.filetype)))
+        print(json.dumps(kindle.get_all_books(filetype=options.filetype), indent=4, ensure_ascii=False))
         exit()
 
     if options.readme:
