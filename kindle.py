@@ -14,6 +14,7 @@ import re
 import time
 import urllib
 from http.cookies import SimpleCookie
+from faker import Faker
 
 try:
     import browser_cookie3
@@ -35,8 +36,7 @@ DEFAULT_SESSION_FILE = ".kindle_session"
 
 
 KINDLE_HEADER = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) "
-    "AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/1AE148",
+    "User-Agent": Faker().user_agent(),
 }
 
 CONTENT_TYPES = {
@@ -222,6 +222,10 @@ class Kindle:
                 "https://",
                 HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
             )
+
+        logger.debug(
+            f"user-agent: { session.headers.get('User-Agent') }"
+        )
         return session
 
     def get_devices(self):
@@ -454,12 +458,17 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
+
+            _, extname = os.path.splitext(name)
+            name = title + extname
+
             ##### if you have many duplicate name books #####
             if self.to_resolve_duplicate_names:
                 name = f"{asin}_{name}"
             if len(name) > self.cut_length:
                 name = name[: self.cut_length - 5] + name[-5:]
             total_size = r.headers["Content-length"]
+
             out = os.path.join(self.out_dir, name)
             logger.info(
                 f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
@@ -576,6 +585,13 @@ if __name__ == "__main__":
         help="If only generate kindle readme stats",
     )
 
+    parser.add_argument(
+        "--list",
+        dest="list_only",
+        action="store_true",
+        help="just list books/pdoc, not to download",
+    )
+
     options = parser.parse_args()
 
     if not os.path.exists(options.outdir):
@@ -595,6 +611,12 @@ if __name__ == "__main__":
         kindle.set_cookie_from_string(options.cookie)
     else:
         kindle.is_browser_cookie = True
+
+
+    if options.list_only:
+        kindle.get_devices()
+        print(json.dumps(kindle.get_all_books(filetype=options.filetype), indent=4, ensure_ascii=False))
+        exit()
 
     if options.readme:
         # generate readme stats
