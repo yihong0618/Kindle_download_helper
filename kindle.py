@@ -223,9 +223,7 @@ class Kindle:
                 HTTPAdapter(max_retries=urllib3.Retry(5, backoff_factor=0.5)),
             )
 
-        logger.debug(
-            f"user-agent: { session.headers.get('User-Agent') }"
-        )
+        logger.debug(f"user-agent: { session.headers.get('User-Agent') }")
         return session
 
     def get_devices(self):
@@ -252,8 +250,8 @@ class Kindle:
             )
         devices = r.json()["GetDevices"]["devices"]
         # sleep get device first time.
-        logger.info("Amazon open their bot check will sleep 6s")
-        time.sleep(6)
+        logger.info("Amazon open their bot check will sleep 3s")
+        time.sleep(3)
         if not devices:
             raise Exception("No devices are bound to this account")
         return [device for device in devices if "deviceSerialNumber" in device]
@@ -304,15 +302,16 @@ class Kindle:
         ### will delete the try and try code
         break_times = 0
         while True:
-            # anyway sleep 1.5
-            time.sleep(1.5)
+            # anyway sleep 0.5
+            time.sleep(0.5)
             r = self.session.post(
                 self.urls["payload"],
                 data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
             )
+            # try three times for bot check
             if r.status_code == 503:
                 # sleep and try again
-                sleep_seconds = 5 + 2 * break_times 
+                sleep_seconds = 5 + 2 * break_times
                 time.sleep(sleep_seconds)
                 logger.info(
                     f"Amazon open their bot check will sleep {sleep_seconds}s and try this api again, now index: {startIndex}/{self.total_to_download}"
@@ -332,7 +331,10 @@ class Kindle:
                         logger.info(f"Next time fail will break the loop")
                         r = self.session.post(
                             self.urls["payload"],
-                            data={"data": json.dumps(payload), "csrfToken": self.csrf_token},
+                            data={
+                                "data": json.dumps(payload),
+                                "csrfToken": self.csrf_token,
+                            },
                         )
                         break_times += 1
                     if not r.ok:
@@ -612,10 +614,15 @@ if __name__ == "__main__":
     else:
         kindle.is_browser_cookie = True
 
-
     if options.list_only:
         kindle.get_devices()
-        print(json.dumps(kindle.get_all_books(filetype=options.filetype), indent=4, ensure_ascii=False))
+        print(
+            json.dumps(
+                kindle.get_all_books(filetype=options.filetype),
+                indent=4,
+                ensure_ascii=False,
+            )
+        )
         exit()
 
     if options.readme:
