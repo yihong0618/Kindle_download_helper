@@ -459,6 +459,8 @@ class Kindle:
                 r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
             )[0]
             name = urllib.parse.unquote(name)
+            _, extname = os.path.splitext(name)
+            name = title + extname
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
 
             ##### if you have many duplicate name books #####
