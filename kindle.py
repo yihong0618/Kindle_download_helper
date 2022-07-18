@@ -83,7 +83,7 @@ KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {read} |\n"
 
 
 def replace_readme_comments(file_name, comment_str, comments_name):
-    with open(file_name, "r+") as f:
+    with open(file_name, "r+", encoding='UTF-8') as f:
         text = f.read()
         # regrex sub from github readme comments
         text = re.sub(
@@ -460,9 +460,6 @@ class Kindle:
             )[0]
             name = urllib.parse.unquote(name)
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
-
-            _, extname = os.path.splitext(name)
-            name = title + extname
 
             ##### if you have many duplicate name books #####
             if self.to_resolve_duplicate_names:
