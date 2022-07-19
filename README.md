@@ -70,6 +70,14 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 4. run: `python3 kindle.py`
 5. if is doc file `python3 kindle.py --pdoc`
 
+### how to `amazon.de` 
+
+1. login amazon.com
+2. visit https://www.amazon.de/hz/mycd/myx#/home/content/booksAll/dateDsc/
+3. right click this page source then find `csrfToken` value copy
+4. run: `python3 kindle.py --de`
+5. if is doc file `python3 kindle.py --de --pdoc`
+
 ### `amazon.jp` を使用する
 
 1. amazon.co.jp にログインする。

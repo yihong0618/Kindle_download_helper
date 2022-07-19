@@ -199,6 +199,13 @@ hr { height: 1px; border-width: 0; }
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QRadioButton" name="radioDE">
+               <property name="text">
+                <string>德亚(.de)</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>

@@ -126,6 +126,8 @@ class KindleMainDialog(QtWidgets.QDialog):
             return "cn"
         elif self.ui.radioJP.isChecked():
             return "jp"
+        elif self.ui.radioDE.isChecked():
+            return "de"
         else:
             return "com"
 

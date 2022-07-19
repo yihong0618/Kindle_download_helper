@@ -10,6 +10,7 @@ gui_dep:
 ui: gui_dep
 	pyside6-rcc ./icon.qrc -o icon_rc.py
 	pyside6-uic ./kindle.ui -o ui_kindle.py
-
+clean: 
+	rm -rf dist build kindle_download_helper.spec
 
 .PHONY: all dep gui_dep ui

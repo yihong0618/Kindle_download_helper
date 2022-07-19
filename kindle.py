@@ -59,11 +59,18 @@ KINDLE_URLS = {
         "insights": "https://www.amazon.co.jp/kindle/reading/insights/data",
         "book_url": "https://www.amazon.co.jp/dp/{book_id}",
     },
+    "de": {
+        "bookall": "https://www.amazon.de/hz/mycd/myx#/home/content/booksAll",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
+        "payload": "https://www.amazon.de/hz/mycd/ajax",
+        "insights": "https://www.amazon.de/kindle/reading/insights/data",
+        "book_url": "https://www.amazon.de/dp/{book_id}",
+    },
     "com": {
         "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
         "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
-        "insights": "https://www.amazon.cn/kindle/reading/insights/data",
+        "insights": "https://www.amazon.com/kindle/reading/insights/data",
         "book_url": "https://www.amazon.com/dp/{book_id}",
     },
 }
@@ -541,6 +548,14 @@ if __name__ == "__main__":
         const="jp",
         default="com",
         help="if your account is an amazon.jp account",
+    )
+    parser.add_argument(
+        "--de",
+        dest="domain",
+        action="store_const",
+        const="de",
+        default="com",
+        help="if your account is an amazon.de account",
     )
     parser.add_argument(
         "--resume-from",
