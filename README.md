@@ -31,6 +31,8 @@ pip3 install -r requirements.txt
 <details>
 <summary> Mac 新手指南</summary>
 
+Added by [chongiscool](https://github.com/chongiscool)
+
 基于我的环境和编程背景，我想补充下，没有 Python 经验的程序员，如何使用该开源库。
 
 ```txt
