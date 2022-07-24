@@ -28,6 +28,48 @@ Use `--readme` command to generate readme file to memory your kindle journey.
 pip3 install -r requirements.txt
 ```
 
+<details>
+<summary> Mac 新手指南</summary>
+
+首先谢谢 大佬们的开源贡献！
+
+基于我的环境和编程背景，我想补充下，没有 Python 经验的程序员，如何使用该开源库。
+
+```txt
+环境：macOS Catalina 10.15.7
+我的编程背景：Android 开发者，使用 Java 和 Kotlin。「 Python3 学过基础语法，**没用 Python3 写过项目** 」
+Kindle：我有一台 paperwhite 2
+```
+
+针对 README.md 的教程，自己如何在 [ **命令行** ] 的环境下，来下载电子书？
+- 第一步：clone 仓库到下载目录(`~/Downloads`) ；再安装依赖 `cd ~/Downloads/Kindle_download_helper ; pip3 install -r requirements.txt --user`
+- 第二步：打开 国内（amazon.cn）[电子书所有内容](http://amazon.cn/)（需要登录自己账户）的页面，按 F12
+	- 获取 cookie ：Network -> Fetch/XHR -> Refresh(Cmd + R) -> 点击任意一个 ajax -> Headers -> Request Headers -> Cookie -> 右键复制它 -> 在 Kindle_download_helper 目录中，新建 cookie_file.txt 来保存 cookie 。
+	- 获取 CSRF token : Headers 右边 -> Payload -> csrfToken -> 右键复制它。
+- 第三步：下载书籍 `python3 kindle.py --cn --cookie-file ./cookie_file.txt your_csrf_Token`
+
+可能的疑问：
+1. 为什么安装依赖要加`--user`，可能是权限的问题，于是我按照命令行输出的提示，添加的，就安装依赖成功了；
+2. 你应该始终，在 Kindle_download_helper 目录下，执行命令(`python3 kindle.py ***`)。
+3. cookie 保存在 Kindle_download_helper/cookie_file.txt 中，方便命令行输入 和 cookie的更新，但**如果你要 PR，务必删除 ./cookie_file.txt，以免泄露个人账户信息**。
+
+----------------------------- 分割线 ----------------------------- 
+
+受老哥(#41 )自动化的启发，如果你有 Shell 脚本的知识，也可以自行写个如下**半自动化**参考脚本；但前提，依然是你得准备好 cookie 和  csrf_token 。
+
+```bash
+#!/bin/bash
+
+cd ~/Downloads 
+git clone https://github.com/yihong0618/Kindle_download_helper.git
+cd ~/Downloads/Kindle_download_helper 
+pip3 install -r requirements.txt --user
+# save cookie in ./cookie_file.txt
+python3 kindle.py --cn --cookie-file ./cookie_file.txt your_csrf_Token
+```
+
+PS：大佬，能否考虑保留这个 issues 一段时间，也许能帮到一部分人 ：）
+</details>
 
 ## 推荐手动输入 cookie
 
