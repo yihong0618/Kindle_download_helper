@@ -31,8 +31,6 @@ pip3 install -r requirements.txt
 <details>
 <summary> Mac 新手指南</summary>
 
-首先谢谢 大佬们的开源贡献！
-
 基于我的环境和编程背景，我想补充下，没有 Python 经验的程序员，如何使用该开源库。
 
 ```txt
@@ -55,7 +53,7 @@ Kindle：我有一台 paperwhite 2
 
 ----------------------------- 分割线 ----------------------------- 
 
-受老哥(#41 )自动化的启发，如果你有 Shell 脚本的知识，也可以自行写个如下**半自动化**参考脚本；但前提，依然是你得准备好 cookie 和  csrf_token 。
+受[#41](https://github.com/yihong0618/Kindle_download_helper/issues/41))自动化的启发，如果你有 Shell 脚本的知识，也可以自行写个如下**半自动化**参考脚本；但前提，依然是你得准备好 cookie 和  csrf_token 。
 
 ```bash
 #!/bin/bash
@@ -68,7 +66,6 @@ pip3 install -r requirements.txt --user
 python3 kindle.py --cn --cookie-file ./cookie_file.txt your_csrf_Token
 ```
 
-PS：大佬，能否考虑保留这个 issues 一段时间，也许能帮到一部分人 ：）
 </details>
 
 ## 推荐手动输入 cookie
