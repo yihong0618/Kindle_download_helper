@@ -24,6 +24,8 @@ import requests
 from requests.adapters import HTTPAdapter
 import urllib3
 
+from dedrm import get_pid_list, MobiBook
+
 logger = logging.getLogger("kindle")
 fh = logging.FileHandler(".error_books.log")
 fh.setLevel(logging.ERROR)
@@ -32,6 +34,7 @@ logger.addHandler(fh)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
+DEFAULT_OUT_DEDRM_DIR = "DEDRMS"
 DEFAULT_SESSION_FILE = ".kindle_session"
 
 
@@ -110,6 +113,7 @@ class Kindle:
         csrf_token=None,
         domain="cn",
         out_dir=DEFAULT_OUT_DIR,
+        out_dedrm_dir=DEFAULT_OUT_DEDRM_DIR,
         cut_length=100,
         session_file=DEFAULT_SESSION_FILE,
     ):
@@ -117,6 +121,8 @@ class Kindle:
         self._csrf_token = csrf_token
         self.total_to_download = 0
         self.out_dir = out_dir
+        self.out_dedrm_dir = out_dedrm_dir
+        self.dedrm = False
         self.cut_length = cut_length
         self.not_done = False
         self.session_file = session_file
@@ -478,6 +484,7 @@ class Kindle:
             total_size = r.headers["Content-length"]
 
             out = os.path.join(self.out_dir, name)
+            out_dedrm = os.path.join(self.out_dedrm_dir, name)
             logger.info(
                 f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
             )
@@ -485,6 +492,17 @@ class Kindle:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
             logger.info(f"{name} downloaded")
+            # for dedrm
+            if self.dedrm:
+                try:
+                    mb = MobiBook(out)
+                    md1, md2 = mb.get_pid_meta_info()
+                    totalpids = get_pid_list(md1, md2, [self.device_serial_number], [])
+                    totalpids = list(set(totalpids))
+                    mb.make_drm_file(totalpids, out_dedrm)
+                except Exception as e:
+                    print(f"Dedrm failed for {name}")
+                    pass
         except Exception as e:
             logger.error(str(e))
             logger.error(f"Title: {title}, Asin: {asin} download failed")
@@ -492,6 +510,8 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
+        self.device_serial_number = device['deviceSerialNumber']
+
         logger.info(
             f"Using default device serial Number: {device['deviceSerialNumber']}"
         )
@@ -575,6 +595,9 @@ if __name__ == "__main__":
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
     )
     parser.add_argument(
+        "-od", "--outdedrmdir", default=DEFAULT_OUT_DEDRM_DIR, help="dwonload output dedrm dir"
+    )
+    parser.add_argument(
         "-s",
         "--session-file",
         default=DEFAULT_SESSION_FILE,
@@ -598,7 +621,13 @@ if __name__ == "__main__":
         "--readme",
         dest="readme",
         action="store_true",
-        help="If only generate kindle readme stats",
+        help="If you want to generate kindle readme stats",
+    )
+    parser.add_argument(
+        "--dedrm",
+        dest="dedrm",
+        action="store_true",
+        help="If you want to `dedrm` directly",
     )
 
     parser.add_argument(
@@ -612,14 +641,21 @@ if __name__ == "__main__":
 
     if not os.path.exists(options.outdir):
         os.makedirs(options.outdir)
+    # for dedrm
+    if not os.path.exists(options.outdedrmdir):
+        os.makedirs(options.outdedrmdir)
     kindle = Kindle(
         options.csrf_token,
         options.domain,
         options.outdir,
+        options.outdedrmdir,
         options.cut_length,
         session_file=options.session_file,
     )
+    # other args
     kindle.to_resolve_duplicate_names = options.resolve_duplicate_names
+    kindle.dedrm = options.dedrm
+    
     if options.cookie_file:
         with open(options.cookie_file, "r") as f:
             kindle.set_cookie_from_string(f.read())

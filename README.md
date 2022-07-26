@@ -102,6 +102,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 3. 右键查看源码，搜索 `csrfToken` 复制后面的 value
 4. 执行 `python3 kindle.py --cn`
 5. 如果下载推送文件 `python3 kindle.py --cn --pdoc`
+5. 如果想直接 dedrm 解密(不保证好用) `python3 kindle.py --cn --pdoc --dedrm`
 
 ### how to `amazon.com`
 
@@ -132,6 +133,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 
 - cookie 和 csrf token 会过期，重新刷新下 amazon 的页面就行
 - 程序会自动在命令执行的目录下创建 `DOWNLOADS` 目录，书会下载在 `DOWNLOADS` 里
+- 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
@@ -140,6 +142,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 - 如果有很多同名 pdoc 或 book 可以使用 `--resolve_duplicate_names` 解决同名冲突
 - error log 记录在 .error_books.log 中
 - 支持生成最近读完书的 README `--readme` 生成的文件在 `my_kindle_stats.md` 中
+- 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里
 
 ## Note
 
@@ -166,6 +169,7 @@ python3 kindle.py --cookie ${cookie} ${csrfToken}
 ## 感谢
 
 - @[Kindle](https://zh.m.wikipedia.org/zh/Kindle)
+- @[DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools)
 - @[frostming](https://github.com/frostming) GUI and a lot of work
 - @[bladewang](https://github.com/bladewang) PDOC download
 
