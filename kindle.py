@@ -527,12 +527,17 @@ class Kindle:
                 f"\n\nNot All done!\nAmazon api limit when this download done.\n You can add command `--resume-from {index}` to resume download next time"
             )
         else:
-            logger.info(
-                "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
-                "(https://github.com/apprenticeharper/DeDRM_tools)\n"
-                "with the following serial number to remove DRM: "
-                + device["deviceSerialNumber"]
-            )
+            if not self.dedrm:
+                logger.info(
+                    "\n\nAll done!\nNow you can use apprenticeharper's DeDRM tools "
+                    "(https://github.com/apprenticeharper/DeDRM_tools)\n"
+                    "with the following serial number to remove DRM: "
+                    + device["deviceSerialNumber"]
+                )
+            else:
+                logger.info(
+                    "All done books saved in `DOWNLOAD`, dedrm files saved in `DEDRMS`" 
+                )
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
 
