@@ -14,17 +14,18 @@ import re
 import time
 import urllib
 from http.cookies import SimpleCookie
+
+import requests
+import urllib3
 from faker import Faker
+from requests.adapters import HTTPAdapter
+
+from dedrm import MobiBook, get_pid_list
 
 try:
     import browser_cookie3
-except:
+except ModuleNotFoundError:
     print("not found browser_cookie3 here, you should use --cookie command")
-import requests
-from requests.adapters import HTTPAdapter
-import urllib3
-
-from dedrm import get_pid_list, MobiBook
 
 logger = logging.getLogger("kindle")
 fh = logging.FileHandler(".error_books.log")
@@ -93,7 +94,7 @@ KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {read} |\n"
 
 
 def replace_readme_comments(file_name, comment_str, comments_name):
-    with open(file_name, "r+", encoding='UTF-8') as f:
+    with open(file_name, "r+", encoding="UTF-8") as f:
         text = f.read()
         # regrex sub from github readme comments
         text = re.sub(
@@ -501,7 +502,7 @@ class Kindle:
                     totalpids = list(set(totalpids))
                     mb.make_drm_file(totalpids, out_dedrm)
                 except Exception as e:
-                    print(f"Dedrm failed for {name}")
+                    logger.error("Dedrm failed for %s: %s", name, e)
                     pass
         except Exception as e:
             logger.error(str(e))
@@ -510,7 +511,7 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.get_devices()[0]
-        self.device_serial_number = device['deviceSerialNumber']
+        self.device_serial_number = device["deviceSerialNumber"]
 
         logger.info(
             f"Using default device serial Number: {device['deviceSerialNumber']}"
@@ -536,7 +537,7 @@ class Kindle:
                 )
             else:
                 logger.info(
-                    "All done books saved in `DOWNLOAD`, dedrm files saved in `DEDRMS`" 
+                    "All done books saved in `DOWNLOAD`, dedrm files saved in `DEDRMS`"
                 )
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
@@ -600,7 +601,10 @@ if __name__ == "__main__":
         "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
     )
     parser.add_argument(
-        "-od", "--outdedrmdir", default=DEFAULT_OUT_DEDRM_DIR, help="dwonload output dedrm dir"
+        "-od",
+        "--outdedrmdir",
+        default=DEFAULT_OUT_DEDRM_DIR,
+        help="dwonload output dedrm dir",
     )
     parser.add_argument(
         "-s",
@@ -660,7 +664,7 @@ if __name__ == "__main__":
     # other args
     kindle.to_resolve_duplicate_names = options.resolve_duplicate_names
     kindle.dedrm = options.dedrm
-    
+
     if options.cookie_file:
         with open(options.cookie_file, "r") as f:
             kindle.set_cookie_from_string(f.read())
