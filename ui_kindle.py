@@ -15,10 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QPlainTextEdit,
-    QPushButton, QRadioButton, QSizePolicy, QSpinBox,
-    QTableView, QTextBrowser, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QGroupBox,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QPlainTextEdit, QPushButton, QRadioButton, QSizePolicy,
+    QSpinBox, QTableView, QTextBrowser, QVBoxLayout,
+    QWidget)
 import icon_rc
 
 class Ui_MainDialog(object):
@@ -90,6 +91,11 @@ class Ui_MainDialog(object):
         self.downloadButton.setObjectName(u"downloadButton")
 
         self.horizontalLayout_4.addWidget(self.downloadButton)
+
+        self.dedrmCkb = QCheckBox(self.listBox)
+        self.dedrmCkb.setObjectName(u"dedrmCkb")
+
+        self.horizontalLayout_4.addWidget(self.dedrmCkb)
 
 
         self.verticalLayout_5.addLayout(self.horizontalLayout_4)
@@ -270,13 +276,14 @@ class Ui_MainDialog(object):
         self.outDirEdit.setText(QCoreApplication.translate("MainDialog", u"DOWNLOADS", None))
         self.browseButton.setText(QCoreApplication.translate("MainDialog", u"\u6d4f\u89c8...", None))
         self.downloadButton.setText(QCoreApplication.translate("MainDialog", u"\u4e0b\u8f7d\u5168\u90e8", None))
+        self.dedrmCkb.setText(QCoreApplication.translate("MainDialog", u"DeDRM", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainDialog", u"\u8f93\u51fa", None))
         self.logBrowser.setHtml(QCoreApplication.translate("MainDialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
-"</style></head><body style=\" font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Microsoft YaHei UI'; font-size:9pt;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:'Microsoft YaHei UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
         self.settingsBox.setTitle(QCoreApplication.translate("MainDialog", u"\u8bbe\u7f6e", None))
         self.loginGroupBox.setTitle("")
         self.radioCOM.setText(QCoreApplication.translate("MainDialog", u"\u7f8e\u4e9a(.com)", None))

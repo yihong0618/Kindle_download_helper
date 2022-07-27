@@ -55,6 +55,7 @@ class Worker(QtCore.QObject):
             self.finished.emit()
             return
         device = devices[0]
+        self.kindle.device_serial_number = device["deviceSerialNumber"]
         for i, book in enumerate(self.iterable):
             try:
                 self.kindle.download_one_book(book._asdict(), device, i, book.filetype)
@@ -106,6 +107,8 @@ class KindleMainDialog(QtWidgets.QDialog):
         instance.csrf_token = self.ui.csrfEdit.text()
         instance.urls = kindle.KINDLE_URLS[self.get_domain()]
         instance.out_dir = self.ui.outDirEdit.text()
+        instance.out_dedrm_dir = os.path.join(instance.out_dir, "DeDRM")
+        instance.dedrm = self.ui.dedrmCkb.isChecked()
         instance.cut_length = self.ui.cutLengthSpin.value()
         instance.total_to_download = 0
         try:
@@ -165,7 +168,6 @@ class KindleMainDialog(QtWidgets.QDialog):
                 [item["title"], item["authors"], item["asin"], filetype]
                 for item in all_books
             ]
-
             self.book_model.updateData(book_data)
         except Exception:
             self.on_error()
@@ -180,6 +182,8 @@ class KindleMainDialog(QtWidgets.QDialog):
             return
         if not os.path.exists(self.kindle.out_dir):
             os.makedirs(self.kindle.out_dir)
+        if not os.path.exists(self.kindle.out_dedrm_dir):
+            os.makedirs(self.kindle.out_dedrm_dir)
         self.thread = QtCore.QThread()
         iterable = self.book_model.data_to_download()
         total = len(iterable)
