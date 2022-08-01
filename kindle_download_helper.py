@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-import kindle
+from kindle_download_helper import kindle as kindle
 from ui_kindle import Ui_MainDialog
 
 logger = logging.getLogger("kindle")

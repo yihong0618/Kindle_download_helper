@@ -340,7 +340,7 @@ hr { height: 1px; border-width: 0; }
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>License: MIT</string>
+           <string>License: GPL V3</string>
           </property>
          </widget>
         </item>
