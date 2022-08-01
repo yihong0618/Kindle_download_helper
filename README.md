@@ -24,7 +24,7 @@ Download all your kindle books and `DeDRM` script.
 2. requirements
 
 or just pip
-pip3 install kindle_download
+`pip3 install kindle_download`
 
 ```python
 python3 --version  #查看 python 版本
