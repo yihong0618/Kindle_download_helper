@@ -1,6 +1,6 @@
 # Kindle_download_helper
 
-Download all your kindle books script.
+Download all your kindle books and `DeDRM` script.
 <img width="1661" alt="image" src="https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png">
 
 ## 安装 Kindle_download_helper
@@ -17,10 +17,14 @@ Download all your kindle books script.
 
 - Mac 新手指南 by @chongiscool，见 [#76](https://github.com/yihong0618/Kindle_download_helper/issues/76)
 
+
 ### Cli 安装使用
 
 1. python3
 2. requirements
+
+or just pip
+pip3 install kindle_download
 
 ```python
 python3 --version  #查看 python 版本
@@ -36,6 +40,7 @@ pip3 install -r requirements.txt
 
 ```python
 python3 kindle.py --h  #查看使用参数
+kindle_download --h  # pip
 
 usage: kindle.py [-h] [--cookie COOKIE | --cookie-file COOKIE_FILE] [--cn] [--jp] [--de] [--resume-from INDEX]
                  [--cut-length CUT_LENGTH] [-o OUTDIR] [-od OUTDEDRMDIR] [-s SESSION_FILE] [--pdoc] [--resolve_duplicate_names]
@@ -66,7 +71,7 @@ options:
   --resolve_duplicate_names
                         Resolve duplicate names files to download
   --readme              If you want to generate kindle readme stats
-  --dedrm               If you want to `dedrm` directly
+  --dedrm               If you want to `DeDRM` directly
   --list                just list books/pdoc, not to download
 ```
 
@@ -77,6 +82,8 @@ options:
 
 ```python
 python3 kindle.py  --dedrm --cn  ## --dedrm 移除 DRM
+or
+kindle_download --dedrm --cn 
 ```
 
 (推荐) 手动输入 cookie、csrfToken 进行下载
@@ -84,6 +91,9 @@ python3 kindle.py  --dedrm --cn  ## --dedrm 移除 DRM
 ```python
 python3 kindle.py ${csrfToken} --cookie ${cookie} --dedrm --cn #下载国区 Kindle 书籍并移除 DRM
 python3 kindle.py ${csrfToken} --cookie ${cookie} --dedrm #下载美区 Kindle 书籍
+or
+kindle_download ${csrfToken} --cookie ${cookie} --dedrm --cn #下载国区 Kindle 书籍并移除 DRM
+kindle_download ${csrfToken} --cookie ${cookie} --dedrm #下载美区 Kindle 书籍
 ```
 
 ### 获取 cookie
@@ -154,7 +164,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 
 - cookie 和 csrf token 会过期，重新刷新下 amazon 的页面就行
 - 程序会自动在命令执行的目录下创建 `DOWNLOADS` 目录，书会下载在 `DOWNLOADS` 里
-- 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里
+- 支持 mobi 类型的文件直接 DeDRM `--dedrm` 生成的文件在 `DEDRMS` 里
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
@@ -169,7 +179,8 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 
 - The cookie and csrf token will expire, just refresh the amazon page again.
 - The program will automatically create `DOWNLOADS` directory under the command execution directory, the book will be downloaded in `DOWNLOADS` directory.
-- If you use [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) to decrypt the key, it will be stored in key.txt
+- Support DeDRM with `--dedrm`
+- or use [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) to decrypt the key, it will be stored in key.txt
 - or just drag it into Calibre. Please google it.
 - If the process fails you can use e.g. `--resume-from ${num}`
 - If the name is too long, you can add: `-cut-length 80` to truncate the file name
