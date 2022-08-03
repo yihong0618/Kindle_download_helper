@@ -14,9 +14,7 @@ Download all your kindle books script.
 ### Help
 
 - 若打开二进制遇到问题，请参考 [#25](https://github.com/yihong0618/Kindle_download_helper/issues/25)
-
 - kindle 无法下载问题，触发了亚马逊风控见 [#69](https://github.com/yihong0618/Kindle_download_helper/issues/69)
-
 - Mac 新手指南 by @chongiscool，见 [#76](https://github.com/yihong0618/Kindle_download_helper/issues/76)
 
 ### Cli 安装使用
@@ -25,11 +23,11 @@ Download all your kindle books script.
 2. requirements
 
 ```python
-python3 --version  #查看 python 版本
+python3 --version  # 查看 python 版本
 ```
 
 ```python
-pip3 install kindle_download  #使用 pip 安装
+pip3 install kindle_download  # 使用 pip 安装
 ```
 
 ```bash
