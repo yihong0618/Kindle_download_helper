@@ -1,12 +1,13 @@
-from faker import Faker
+import random
+
+from kindle_download_helper.user_agents import USER_AGENTS
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
 DEFAULT_OUT_DEDRM_DIR = "DEDRMS"
 DEFAULT_SESSION_FILE = ".kindle_session"
 
-
 KINDLE_HEADER = {
-    "User-Agent": Faker().user_agent(),
+    "User-Agent": random.choice(USER_AGENTS),
 }
 
 CONTENT_TYPES = {

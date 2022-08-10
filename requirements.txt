@@ -1,4 +1,3 @@
 requests
 browser-cookie3
-faker
 pywin32 ; sys_platform == 'win32'

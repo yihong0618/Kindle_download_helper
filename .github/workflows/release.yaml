@@ -36,15 +36,19 @@ jobs:
           python -m pip install -U -r requirements.txt -r requirements_gui.txt
           mkdir downloads
 
+      - name: Write version file
+        run: |
+          echo "__version__ = '${{ github.ref_name }}'" > gui/__version__.py
+
       - name: Make executable windows
         if: matrix.os == 'windows'
         run: |
-          pyinstaller --onefile --clean --windowed --icon=resource/kindle.ico kindle_download_helper.py
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.ico -n kindle_download_helper kindle_gui.py
 
       - name: Make executable linux
         if: matrix.os != 'windows'
         run: |
-          pyinstaller --onefile --clean --windowed --icon=resource/kindle.icns kindle_download_helper.py
+          pyinstaller --onefile --clean --windowed --icon=resource/kindle.icns -n kindle_download_helper kindle_gui.py
 
       - name: Make dist(MacOS)
         if: matrix.os == 'macos'
@@ -87,3 +91,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - run: Generate Release Notes
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
