@@ -96,6 +96,7 @@ jobs:
         with:
           node-version: 16.x
 
-      - run: Generate Release Notes
+      - name: Generate Release Notes
+        run: npx changelogithub
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
