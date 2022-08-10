@@ -7,8 +7,9 @@ from typing import NamedTuple
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from kindle_download_helper import kindle as kindle
-from ui_kindle import Ui_MainDialog
+from gui.__version__ import __version__
+from gui.ui_kindle import Ui_MainDialog
+from kindle_download_helper import kindle
 
 logger = logging.getLogger("kindle")
 
@@ -75,6 +76,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         super().__init__()
         self.ui = Ui_MainDialog()
         self.ui.setupUi(self)
+        self.set_version()
         self.kindle = kindle.Kindle("")
         self.setup_signals()
         # self.setup_logger()
@@ -84,6 +86,9 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.ui.bookView.horizontalHeader().setSectionResizeMode(
             1, QtWidgets.QHeaderView.Stretch
         )
+
+    def set_version(self):
+        self.setWindowTitle(self.windowTitle() + " " + __version__)
 
     def setup_signals(self):
         self.ui.radioFromInput.clicked.connect(self.on_from_input)
