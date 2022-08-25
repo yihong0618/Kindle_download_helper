@@ -123,6 +123,7 @@ class KindleMainDialog(QtWidgets.QDialog):
             self.on_error()
             return False
         try:
+            self.kindle.ensure_cookie_token()
             self.kindle.csrf_token
         except Exception:
             self.show_error("Failed to get CSRF token, please input")
