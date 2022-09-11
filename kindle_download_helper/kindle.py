@@ -48,6 +48,20 @@ logger.addHandler(fh)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def find_device(devices, device_sn):
+    if device_sn != "":
+        for device in devices:
+            if device["deviceSerialNumber"] == device_sn.strip():
+                logger.info(
+                    f"Using specified device with serial number: {device['deviceSerialNumber']}"
+                )
+                return device
+    logger.info(
+        f"Using default device serial Number: {devices[0]['deviceSerialNumber']}"
+    )
+    return devices[0]
+
+
 class Kindle:
     def __init__(
         self,
@@ -57,6 +71,7 @@ class Kindle:
         out_dedrm_dir=DEFAULT_OUT_DEDRM_DIR,
         cut_length=100,
         session_file=DEFAULT_SESSION_FILE,
+        **kwargs,
     ):
         self.urls = KINDLE_URLS[domain]
         self._csrf_token = csrf_token
@@ -72,6 +87,7 @@ class Kindle:
         self.to_resolve_duplicate_names = False
         self.books_info_dict = {}
         self.file_type_list = ["EBOOK", "PDOC"]
+        self.device_sn = kwargs["device_sn"] if "device_sn" in kwargs else ""
         atexit.register(self.dump_session)
 
     def set_cookie(self, cookiejar):
@@ -466,12 +482,8 @@ class Kindle:
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
-        device = self.get_devices()[0]
+        device = find_device(self.get_devices(), self.device_sn)
         self.device_serial_number = device["deviceSerialNumber"]
-
-        logger.info(
-            f"Using default device serial Number: {device['deviceSerialNumber']}"
-        )
         books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")

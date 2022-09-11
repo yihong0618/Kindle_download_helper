@@ -121,6 +121,13 @@ def main():
         help="just list books/pdoc, not to download",
     )
 
+    parser.add_argument(
+        "--device_sn",
+        dest="device_sn",
+        default="",
+        help="Download file for device with this serial number",
+    )
+
     options = parser.parse_args()
 
     if not os.path.exists(options.outdir):
@@ -135,6 +142,7 @@ def main():
         options.outdedrmdir,
         options.cut_length,
         session_file=options.session_file,
+        device_sn=options.device_sn,
     )
     # other args
     kindle.to_resolve_duplicate_names = options.resolve_duplicate_names
