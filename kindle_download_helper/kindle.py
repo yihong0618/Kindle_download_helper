@@ -49,13 +49,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def find_device(devices, device_sn):
-    if device_sn != "":
+    if isinstance(device_sn, str) and device_sn != "":
         for device in devices:
             if device["deviceSerialNumber"] == device_sn.strip():
                 logger.info(
                     f"Using specified device with serial number: {device['deviceSerialNumber']}"
                 )
                 return device
+        else:
+            logger.info(f"Can't find device with serial number: {device_sn}")
     logger.info(
         f"Using default device serial Number: {devices[0]['deviceSerialNumber']}"
     )
