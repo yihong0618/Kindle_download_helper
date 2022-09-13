@@ -39,7 +39,7 @@ KINDLE_URLS = {
     },
     "com": {
         "bookall": "https://www.amazon.com/hz/mycd/myx#/home/content/booksAll",
-        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}",
+        "download": "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type={}&key={}&fsn={}&device_type={}&customerId={}&authPool=Amazon",
         "payload": "https://www.amazon.com/hz/mycd/ajax",
         "insights": "https://www.amazon.com/kindle/reading/insights/data",
         "book_url": "https://www.amazon.com/dp/{book_id}",
