@@ -139,7 +139,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 
 ### how to `amazon.de`
 
-1. login amazon.com
+1. login amazon.de
 2. visit <https://www.amazon.de/hz/mycd/myx#/home/content/booksAll/dateDsc/>
 3. right click this page source then find `csrfToken` value copy
 4. run: `python3 kindle.py --de`
