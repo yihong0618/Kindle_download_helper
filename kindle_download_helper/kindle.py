@@ -12,6 +12,7 @@ import pickle
 import re
 import time
 import urllib
+import pathlib
 from http.cookies import SimpleCookie
 
 import requests
@@ -359,10 +360,10 @@ class Kindle:
         if not book:
             return
         book_title = book.get("title", "")
+
         # filter the brackets in the book title
-        book_title = re.sub(
-            r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)", "", book_title
-        )
+        book_title = re.sub(r"(\（[^)]*\）|\([^)]*\)|\【[^)]*\】|\[[^)]*\])", "", book_title)
+
         book_title = book_title.replace(" ", "")
         if book.get("category", "") == "KindleEBook":
             book_url = book_url.format(book_id=asin)
@@ -443,11 +444,14 @@ class Kindle:
             )
             r = self.session.get(download_url, verify=False, stream=True)
             r.raise_for_status()
-            name = re.findall(
+            origin_name = re.findall(
                 r"filename\*=UTF-8''(.+)", r.headers["Content-Disposition"]
             )[0]
+            name = origin_name
+
             name = urllib.parse.unquote(name)
             _, extname = os.path.splitext(name)
+
             name = title + extname
             name = re.sub(r'[\\/:*?"<>|]', "_", name)
 
@@ -468,8 +472,21 @@ class Kindle:
             size_in_mb = round(float(total_size) / (1024*1024), 3)
             
             logger.info(
-                f"[{index+1:>{count_digit_length}}/{self.total_to_download:>{count_digit_length}}][{size_in_mb:> {size_length}} Mb]Downloading {name}"
+                f"[{index+1:>{count_digit_length}}/{self.total_to_download:>{count_digit_length}}][{size_in_mb:> {size_length}}Mb]Downloading {name}"
             )
+
+            #try if we can writ the file
+            try :
+                pathlib.Path(out).touch()
+            except OSError as e:
+                if e.errno == 36 : #means file name too long
+                    name = self.trim_title_suffix(title) + extname
+                    logger.info(f"Original filename too long, trim to {name}")
+                    out = os.path.join(self.out_dir, name)
+                    out_dedrm = os.path.join(self.out_dedrm_dir, name)
+                else :
+                    logger.error(e)
+
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
                     f.write(chunk)
@@ -518,3 +535,6 @@ class Kindle:
                 )
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
+
+    def trim_title_suffix(self, title):
+        return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
