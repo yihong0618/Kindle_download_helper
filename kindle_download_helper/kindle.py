@@ -223,7 +223,7 @@ class Kindle:
             )
         devices = r.json()["GetDevices"]["devices"]
         # sleep get device first time.
-        logger.info("Amazon open their bot check will sleep 3s")
+        logger.info("Amazon bot check detected, sleep 3 sec")
         time.sleep(3)
         if not devices:
             raise Exception("No devices are bound to this account")
@@ -287,7 +287,7 @@ class Kindle:
                 sleep_seconds = 5 + 2 * break_times
                 time.sleep(sleep_seconds)
                 logger.info(
-                    f"Amazon open their bot check will sleep {sleep_seconds}s and try this api again, now index: {startIndex}/{self.total_to_download}"
+                    f"Amazon bot check detected, sleep {sleep_seconds} sec and try this api again, now index: {startIndex}/{self.total_to_download}"
                 )
                 if break_times < 7:
                     break_times += 1
@@ -299,7 +299,7 @@ class Kindle:
                     if r.status_code == 503:
                         time.sleep(sleep_seconds)
                         logger.info(
-                            f"Amazon open their bot check will sleep {sleep_seconds}s last time and try this api again, now index: {startIndex}/{self.total_to_download}"
+                            f"Amazon bot check detected, sleep {sleep_seconds} sec last time and try this api again, now index: {startIndex}/{self.total_to_download}"
                         )
                         logger.info(f"Next time fail will break the loop")
                         r = self.session.post(
@@ -500,7 +500,7 @@ class Kindle:
                     totalpids = list(set(totalpids))
                     mb.make_drm_file(totalpids, out_dedrm)
                 except Exception as e:
-                    logger.error("Dedrm failed for %s: %s", name, e)
+                    logger.error("DeDRM failed for %s: %s", name, e)
                     pass
         except Exception as e:
             logger.error(str(e))
@@ -533,8 +533,10 @@ class Kindle:
                 logger.info(
                     "All done books saved in `DOWNLOAD`, dedrm files saved in `DEDRMS`"
                 )
+
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
+            logger.info("the device serial number can also be found here: {0}".format(os.path.join(self.out_dir, "key.txt")))
 
     def trim_title_suffix(self, title):
         return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
