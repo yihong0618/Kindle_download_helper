@@ -460,8 +460,15 @@ class Kindle:
 
             out = os.path.join(self.out_dir, name)
             out_dedrm = os.path.join(self.out_dedrm_dir, name)
+
+            #normally one owns no more than 9999 books
+            count_digit_length = 4
+
+            size_length = 6
+            size_in_mb = round(float(total_size) / (1024*1024), 3)
+            
             logger.info(
-                f"({index + 1}/{self.total_to_download})downloading {name} {total_size} bytes"
+                f"[{index+1:>{count_digit_length}}/{self.total_to_download:>{count_digit_length}}][{size_in_mb:> {size_length}} Mb]Downloading {name}"
             )
             with open(out, "wb") as f:
                 for chunk in r.iter_content(chunk_size=512):
