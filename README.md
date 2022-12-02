@@ -93,7 +93,7 @@ python3 kindle.py ${csrfToken} --cookie ${cookie} --dedrm #下载美区 Kindle �
 ### 获取 cookie
 
 若默认情况下提示 cookie 无效，你也可以手动输入 cookie。
-在上述 [全部书籍](https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/) 列表页面，按 `F12` 或右键点击——检查，进入网络面板 (Network)，找到任意一个 `ajax` 请求，复制请求头里的 `Cookie` 即可。同时也能在 Payload 里找到 `csrfToken`。
+在上述 [全部书籍](https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/) 列表页面，按 `F12` 或右键点击——检查，进入网络面板 (Network)，在 Name 栏找到任意一个 `ajax` 请求，右键复制 Request Headers 里的 `Cookie` 即可。同时也能在 Payload 里找到 `csrfToken`。
 
 然后，执行
 
