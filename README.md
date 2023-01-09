@@ -145,10 +145,18 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 4. run: `python3 kindle.py --de`
 5. if is doc file `python3 kindle.py --de --pdoc`
 
+### how to `amazon.co.uk`
+
+1. login amazon.co.uk
+2. visit <https://www.amazon.co.uk/hz/mycd/myx#/home/content/booksAll/dateDsc/>
+3. right click this page source then find `csrfToken` value copy
+4. run: `python3 kindle.py --uk`
+5. if is doc file `python3 kindle.py --uk --pdoc`
+
 ### `amazon.jp` を使用する
 
 1. amazon.co.jp にログインする。
-2. ホームページ <https://www.amazon.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/>）にアクセスする。
+2. ホームページ <https://www.amazon.co.jp/hz/mycd/myx#/home/content/booksAll/dateDsc/>）にアクセスする。
 3. ソースコード上で右クリックし、`csrfToken`を検索して、それ以降の値をコピーします。
 4. `python3 kindle.py --jp` を実行する。
 5. プッシュファイルをダウンロードする場合 `python3 kindle.py --jp --pdoc`

@@ -154,6 +154,10 @@ class Ui_MainDialog(object):
 
         self.verticalLayout_2.addWidget(self.radioDE)
 
+        self.radioUK = QRadioButton(self.loginGroupBox)
+        self.radioUK.setObjectName(u"radioUK")
+
+        self.verticalLayout_2.addWidget(self.radioUK)
 
         self.horizontalLayout_2.addLayout(self.verticalLayout_2)
 
@@ -290,6 +294,7 @@ class Ui_MainDialog(object):
         self.radioCN.setText(QCoreApplication.translate("MainDialog", u"\u4e2d\u4e9a(.cn)", None))
         self.radioJP.setText(QCoreApplication.translate("MainDialog", u"\u65e5\u4e9a(.jp)", None))
         self.radioDE.setText(QCoreApplication.translate("MainDialog", u"\u5fb7\u4e9a(.de)", None))
+        self.radioUK.setText(QCoreApplication.translate("MainDialog", u"\u82F1\u4e9a(.uk)", None))
         self.loginButton.setText(QCoreApplication.translate("MainDialog", u"\u767b\u5f55", None))
         self.cookiesGroupBox.setTitle(QCoreApplication.translate("MainDialog", u"Cookies", None))
         self.radioFromInput.setText(QCoreApplication.translate("MainDialog", u"\u6765\u81ea\u8f93\u5165", None))

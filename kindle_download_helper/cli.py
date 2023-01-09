@@ -48,7 +48,7 @@ def main():
         action="store_const",
         const="jp",
         default="com",
-        help="if your account is an amazon.jp account",
+        help="if your account is an amazon.co.jp account",
     )
     parser.add_argument(
         "--de",
@@ -57,6 +57,14 @@ def main():
         const="de",
         default="com",
         help="if your account is an amazon.de account",
+    )
+    parser.add_argument(
+        "--uk",
+        dest="domain",
+        action="store_const",
+        const="uk",
+        default="com",
+        help="if your account is an amazon.co.uk account",
     )
     parser.add_argument(
         "--resume-from",
