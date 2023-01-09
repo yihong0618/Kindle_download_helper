@@ -55,8 +55,9 @@ options:
   --cookie-file COOKIE_FILE
                         load cookie local file
   --cn                  if your account is an amazon.cn account
-  --jp                  if your account is an amazon.jp account
+  --jp                  if your account is an amazon.co.jp account
   --de                  if your account is an amazon.de account
+  --uk                  if your account is an amazon.co.uk account
   --resume-from INDEX   resume from the index if download failed
   --cut-length CUT_LENGTH
                         truncate the file name
