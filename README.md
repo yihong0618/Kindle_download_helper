@@ -39,17 +39,15 @@ pip3 install -r requirements.txt
 ```
 
 ```python
-python3 kindle.py --h  #查看使用参数
-
-usage: kindle.py [-h] [--cookie COOKIE | --cookie-file COOKIE_FILE] [--cn] [--jp] [--de] [--resume-from INDEX]
-                 [--cut-length CUT_LENGTH] [-o OUTDIR] [-od OUTDEDRMDIR] [-s SESSION_FILE] [--pdoc] [--resolve_duplicate_names]
-                 [--readme] [--dedrm] [--list]
+python kindle.py -h
+usage: kindle.py [-h] [--cookie COOKIE | --cookie-file COOKIE_FILE] [--cn] [--jp] [--de] [--uk] [--resume-from INDEX] [--cut-length CUT_LENGTH] [-o OUTDIR] [-od OUTDEDRMDIR] [-s SESSION_FILE] [--pdoc]
+                 [--resolve_duplicate_names] [--readme] [--dedrm] [--list] [--device_sn DEVICE_SN] [--mode MODE]
                  [csrf_token]
 
 positional arguments:
   csrf_token            amazon or amazon cn csrf token
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --cookie COOKIE       amazon or amazon cn cookie
   --cookie-file COOKIE_FILE
@@ -73,6 +71,9 @@ options:
   --readme              If you want to generate kindle readme stats
   --dedrm               If you want to `dedrm` directly
   --list                just list books/pdoc, not to download
+  --device_sn DEVICE_SN
+                        Download file for device with this serial number
+  --mode MODE           Mode of download, all : download all files at once, sel: download selected files
 ```
 
 
@@ -90,6 +91,33 @@ python3 kindle.py  --dedrm --cn  ## --dedrm 移除 DRM
 python3 kindle.py ${csrfToken} --cookie ${cookie} --dedrm --cn #下载国区 Kindle 书籍并移除 DRM
 python3 kindle.py ${csrfToken} --cookie ${cookie} --dedrm #下载美区 Kindle 书籍
 ```
+
+默认下载所有文件，可以输入如下命令行来手动选择需要下载的书籍
+
+```python
+python3 kindle.py --mode sel # "python3 kindle.py --pdoc --mode sel" for personal document
+```
+
+等程序获取到书籍列表后，程序会要求输入要下载的书籍序号：
+
+``` string
+Input the index of books you want to download, split by space (q to quit, l to list books).
+```
+
+此时，在命令行中输入字母"q"，然后回车则会退出下载；输入字母"l"，再回车则会重新输出所有书籍列表。
+如要下载书籍，查看该书籍对应的 Index，然后在命令行输入（假设想下载第7，10，20本书）：
+
+``` string
+7 10 20
+```
+
+用空格隔开，最后回车即可。输入还支持range，比如输入
+
+``` string
+4 5 10:12 15
+```
+
+此时程序会下载第4，5，10，11，12，15本书籍。
 
 ### 获取 cookie
 
