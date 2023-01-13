@@ -39,7 +39,8 @@ pip3 install -r requirements.txt
 ```
 
 ```python
-python kindle.py -h
+python kindle.py -h # 查看使用参数
+
 usage: kindle.py [-h] [--cookie COOKIE | --cookie-file COOKIE_FILE] [--cn] [--jp] [--de] [--uk] [--resume-from INDEX] [--cut-length CUT_LENGTH] [-o OUTDIR] [-od OUTDEDRMDIR] [-s SESSION_FILE] [--pdoc]
                  [--resolve_duplicate_names] [--readme] [--dedrm] [--list] [--device_sn DEVICE_SN] [--mode MODE]
                  [csrf_token]
