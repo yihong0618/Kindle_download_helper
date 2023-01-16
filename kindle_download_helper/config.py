@@ -2,7 +2,7 @@ import random
 
 from kindle_download_helper.user_agents import USER_AGENTS
 
-DEFAULT_OUT_DIR = "DOWNLOADS"
+DEFAULT_OUT_DIR = "tmp"
 DEFAULT_OUT_DEDRM_DIR = "DEDRMS"
 DEFAULT_SESSION_FILE = ".kindle_session"
 
