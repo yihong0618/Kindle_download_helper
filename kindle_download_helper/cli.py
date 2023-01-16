@@ -21,6 +21,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # download selected books for cli
 def download_selected_books(kindle, options):
     # get all books and get the default device
+    print('Getting all books, please wait...')
     books = kindle.get_all_books(filetype=options.filetype)
     device = kindle.find_device()
     
@@ -52,7 +53,8 @@ def download_selected_books(kindle, options):
                     # decode the range
                     idx_begin, idx_end = [int(i) for i in idx.split(':')]
                     # append the range to downlist
-                    [downlist.append(i) for i in range(idx_begin-1, idx_end)]
+                    extend_list = [i for i in range(idx_begin-1, idx_end)]
+                    downlist.extend(extend_list)
                 else:
                     # if is not a number, and no ":" in it, then it is an error
                     print('Input error, please input numbers!!!')
@@ -61,7 +63,7 @@ def download_selected_books(kindle, options):
             else:
                 # if is a number, then append it to downlist
                 downlist.append(int(idx)-1)
-        if flag == False:
+        if not flag:
             continue
         
         # remove the duplicate indices
