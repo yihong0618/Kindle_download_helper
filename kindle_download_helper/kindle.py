@@ -48,23 +48,6 @@ logger.addHandler(fh)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
-def find_device(devices, device_sn):
-    if isinstance(device_sn, str) and device_sn != "":
-        for device in devices:
-            if device["deviceSerialNumber"] == device_sn.strip():
-                logger.info(
-                    f"Using specified device with serial number: {device['deviceSerialNumber']}"
-                )
-                return device
-        else:
-            logger.info(f"Can't find device with serial number: {device_sn}")
-    logger.info(
-        f"Using default device serial Number: {devices[0]['deviceSerialNumber']}"
-    )
-    return devices[0]
-
-
 class Kindle:
     def __init__(
         self,
@@ -137,6 +120,25 @@ class Kindle:
                 cookies_dict, cookiejar=None, overwrite=True
             )
         return cookiejar
+    
+    def find_device(self):
+        devices = self.get_devices()
+        device_sn = self.device_sn
+        
+        if isinstance(device_sn, str) and device_sn != "":
+            for device in devices:
+                if device["deviceSerialNumber"] == device_sn.strip():
+                    logger.info(
+                        f"Using specified device with serial number: {device['deviceSerialNumber']}"
+                    )
+                    return device
+            else:
+                logger.info(f"Can't find device with serial number: {device_sn}")
+        logger.info(
+            f"Using default device serial Number: {devices[0]['deviceSerialNumber']}"
+        )
+        self.device_serial_number = devices[0]["deviceSerialNumber"]
+        return devices[0]
 
     def _get_csrf_token(self):
         """
@@ -508,8 +510,8 @@ class Kindle:
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
-        device = find_device(self.get_devices(), self.device_sn)
-        self.device_serial_number = device["deviceSerialNumber"]
+        device = self.find_device()
+        
         books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")

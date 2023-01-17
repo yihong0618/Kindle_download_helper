@@ -130,3 +130,6 @@ dmypy.json
 .pyre/
 
 .kindle_session
+
+# remove MacOS .DS_Store
+.DS_Store
