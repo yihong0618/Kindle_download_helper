@@ -84,7 +84,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QTableView" name="bookView"/>
+         <widget class="QTableView" name="bookView">
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+         </widget>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -114,6 +118,13 @@
             <property name="text">
              <string>下载全部</string>
             </property>
+           </widget>
+          </item>
+          <item>
+          <widget class="QPushButton" name="selectedButton">
+           <property name="text">
+            <string>Download Selected</string>
+           </property>
            </widget>
           </item>
           <item>
