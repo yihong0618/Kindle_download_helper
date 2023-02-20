@@ -33,6 +33,7 @@ class Book(NamedTuple):
     asin: str
     filetype: str
     done: bool
+    selected: bool
 
 
 class Worker(QtCore.QObject):
@@ -82,7 +83,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         # self.setup_logger()
         self.book_model = BookItemModel(self.ui.bookView, [], ["序号", "书名", "作者"])
         self.ui.bookView.setModel(self.book_model)
-        self.ui.bookView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        #self.ui.bookView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection) #allow selection so user can choose items to download
         self.ui.bookView.horizontalHeader().setSectionResizeMode(
             1, QtWidgets.QHeaderView.Stretch
         )
@@ -97,6 +98,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.ui.browseButton.clicked.connect(self.on_browse_dir)
         self.ui.fetchButton.clicked.connect(self.on_fetch_books)
         self.ui.downloadButton.clicked.connect(self.on_download_books)
+        self.ui.selectedButton.clicked.connect(self.on_download_selected_books)
 
     def show_error(self, message):
         msg = QtWidgets.QErrorMessage(self)
@@ -123,6 +125,7 @@ class KindleMainDialog(QtWidgets.QDialog):
             self.on_error()
             return False
         try:
+            self.kindle.ensure_cookie_token()
             self.kindle.csrf_token
         except Exception:
             self.show_error("Failed to get CSRF token, please input")
@@ -184,7 +187,7 @@ class KindleMainDialog(QtWidgets.QDialog):
     def log(self, message):
         self.ui.logBrowser.append(message)
 
-    def on_download_books(self):
+    def download_books(self, mode="all"):
         if not self.setup_kindle():
             return
         if not os.path.exists(self.kindle.out_dir):
@@ -192,7 +195,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         if not os.path.exists(self.kindle.out_dedrm_dir):
             os.makedirs(self.kindle.out_dedrm_dir)
         self.thread = QtCore.QThread()
-        iterable = self.book_model.data_to_download()
+        iterable = self.book_model.data_to_download(mode)
         total = len(iterable)
         self.kindle.total_to_download = total
         self.worker = Worker(iterable, self.kindle)
@@ -212,6 +215,13 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.ui.downloadButton.setEnabled(False)
         self.thread.finished.connect(self.on_finish_download)
         self.thread.start()
+
+    def on_download_books(self):
+        self.download_books("all")
+
+    def on_download_selected_books(self):
+        self.book_model.mark_selected(self.ui.bookView.selectionModel().selectedRows(column=0))
+        self.download_books("selected")
 
     def on_finish_download(self):
         self.ui.downloadButton.setEnabled(True)
@@ -237,7 +247,18 @@ class BookItemModel(QtCore.QAbstractTableModel):
     def mark_done(self, idx):
         if idx >= len(self._data):
             return
-        self._data[idx] = Book(*self._data[idx][:-1], done=True)
+        self._data[idx] = self._data[idx]._replace(done=True)
+        self.layoutAboutToBeChanged.emit()
+        self.dataChanged.emit(
+            self.createIndex(idx, 0), self.createIndex(idx, self.columnCount(0))
+        )
+        self.layoutChanged.emit()
+
+    # Mark which books to download
+    def mark_selected(self, rows):
+        for index in rows:
+            idx = self.data(index, QtCore.Qt.DisplayRole)
+            self._data[idx-1] = self._data[idx-1]._replace(selected=True)
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(
             self.createIndex(idx, 0), self.createIndex(idx, self.columnCount(0))
@@ -245,7 +266,7 @@ class BookItemModel(QtCore.QAbstractTableModel):
         self.layoutChanged.emit()
 
     def updateData(self, data):
-        self._data = [Book(i, *row, False) for i, row in enumerate(data, 1)]
+        self._data = [Book(i, *row, False, False) for i, row in enumerate(data, 1)]
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(
             self.createIndex(0, 0),
@@ -253,8 +274,11 @@ class BookItemModel(QtCore.QAbstractTableModel):
         )
         self.layoutChanged.emit()
 
-    def data_to_download(self):
-        return [item for item in self._data if not item.done]
+    def data_to_download(self, mode="all"):
+        if mode == "all":
+            return [item for item in self._data if not item.done]
+        elif mode == "selected":
+            return [item for item in self._data if (not item.done) and (item.selected)]
 
     def data(self, index, role):
         if not index.isValid():

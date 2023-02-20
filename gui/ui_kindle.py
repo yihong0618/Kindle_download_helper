@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'kindle.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.0
+## Created by: Qt User Interface Compiler version 6.3.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -15,7 +15,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QGroupBox,
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDialog, QGroupBox,
     QHBoxLayout, QHeaderView, QLabel, QLineEdit,
     QPlainTextEdit, QPushButton, QRadioButton, QSizePolicy,
     QSpinBox, QTableView, QTextBrowser, QVBoxLayout,
@@ -67,6 +67,7 @@ class Ui_MainDialog(object):
 
         self.bookView = QTableView(self.listBox)
         self.bookView.setObjectName(u"bookView")
+        self.bookView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.verticalLayout_5.addWidget(self.bookView)
 
@@ -91,6 +92,11 @@ class Ui_MainDialog(object):
         self.downloadButton.setObjectName(u"downloadButton")
 
         self.horizontalLayout_4.addWidget(self.downloadButton)
+
+        self.selectedButton = QPushButton(self.listBox)
+        self.selectedButton.setObjectName(u"selectedButton")
+
+        self.horizontalLayout_4.addWidget(self.selectedButton)
 
         self.dedrmCkb = QCheckBox(self.listBox)
         self.dedrmCkb.setObjectName(u"dedrmCkb")
@@ -280,6 +286,7 @@ class Ui_MainDialog(object):
         self.outDirEdit.setText(QCoreApplication.translate("MainDialog", u"DOWNLOADS", None))
         self.browseButton.setText(QCoreApplication.translate("MainDialog", u"\u6d4f\u89c8...", None))
         self.downloadButton.setText(QCoreApplication.translate("MainDialog", u"\u4e0b\u8f7d\u5168\u90e8", None))
+        self.selectedButton.setText(QCoreApplication.translate("MainDialog", u"Download Selected", None))
         self.dedrmCkb.setText(QCoreApplication.translate("MainDialog", u"DeDRM", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainDialog", u"\u8f93\u51fa", None))
         self.logBrowser.setHtml(QCoreApplication.translate("MainDialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
