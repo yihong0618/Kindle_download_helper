@@ -225,7 +225,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 ## 贡献
 
 1. Any issues PR welcome
-2. `black kindle.py`
+2. `black kindle.py kindle_gui.py`
 
 ## 感谢
 
