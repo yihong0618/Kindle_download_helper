@@ -83,7 +83,7 @@ class KindleMainDialog(QtWidgets.QDialog):
         # self.setup_logger()
         self.book_model = BookItemModel(self.ui.bookView, [], ["序号", "书名", "作者"])
         self.ui.bookView.setModel(self.book_model)
-        #self.ui.bookView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection) #allow selection so user can choose items to download
+        # self.ui.bookView.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection) #allow selection so user can choose items to download
         self.ui.bookView.horizontalHeader().setSectionResizeMode(
             1, QtWidgets.QHeaderView.Stretch
         )
@@ -220,7 +220,9 @@ class KindleMainDialog(QtWidgets.QDialog):
         self.download_books("all")
 
     def on_download_selected_books(self):
-        self.book_model.mark_selected(self.ui.bookView.selectionModel().selectedRows(column=0))
+        self.book_model.mark_selected(
+            self.ui.bookView.selectionModel().selectedRows(column=0)
+        )
         self.download_books("selected")
 
     def on_finish_download(self):
@@ -258,7 +260,7 @@ class BookItemModel(QtCore.QAbstractTableModel):
     def mark_selected(self, rows):
         for index in rows:
             idx = self.data(index, QtCore.Qt.DisplayRole)
-            self._data[idx-1] = self._data[idx-1]._replace(selected=True)
+            self._data[idx - 1] = self._data[idx - 1]._replace(selected=True)
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(
             self.createIndex(idx, 0), self.createIndex(idx, self.columnCount(0))
