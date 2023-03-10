@@ -4,6 +4,7 @@ from kindle_download_helper.user_agents import USER_AGENTS
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
 DEFAULT_OUT_DEDRM_DIR = "DEDRMS"
+DEFAULT_OUT_EPUB_DIR = "EPUB"
 DEFAULT_SESSION_FILE = ".kindle_session"
 
 KINDLE_HEADER = {
