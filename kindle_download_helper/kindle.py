@@ -13,6 +13,8 @@ import re
 import time
 import urllib
 import pathlib
+import shutil
+from mobi import extract
 from http.cookies import SimpleCookie
 
 import requests
@@ -23,8 +25,9 @@ from kindle_download_helper.dedrm import MobiBook, get_pid_list
 from kindle_download_helper.config import (
     KINDLE_URLS,
     DEFAULT_OUT_DIR,
-    DEFAULT_SESSION_FILE,
     DEFAULT_OUT_DEDRM_DIR,
+    DEFAULT_OUT_EPUB_DIR,
+    DEFAULT_SESSION_FILE,
     CONTENT_TYPES,
     KINDLE_STAT_TEMPLATE,
 )
@@ -48,6 +51,7 @@ logger.addHandler(fh)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
 class Kindle:
     def __init__(
         self,
@@ -55,6 +59,7 @@ class Kindle:
         domain="cn",
         out_dir=DEFAULT_OUT_DIR,
         out_dedrm_dir=DEFAULT_OUT_DEDRM_DIR,
+        out_epub_dir=DEFAULT_OUT_EPUB_DIR,
         cut_length=100,
         session_file=DEFAULT_SESSION_FILE,
         **kwargs,
@@ -64,6 +69,7 @@ class Kindle:
         self.total_to_download = 0
         self.out_dir = out_dir
         self.out_dedrm_dir = out_dedrm_dir
+        self.out_epub_dir = out_epub_dir
         self.dedrm = False
         self.cut_length = cut_length
         self.not_done = False
@@ -104,7 +110,7 @@ class Kindle:
         if not self.session.cookies:
             logger.debug("No cookie found, trying to load from browsers")
             try:
-                self.set_cookie(browser_cookie3.load(domain_name="amazon"))
+                self.set_cookie(browser_cookie3.load())
             except:
                 print("not found browser_cookie3 here, you should use --cookie command")
 
@@ -120,11 +126,11 @@ class Kindle:
                 cookies_dict, cookiejar=None, overwrite=True
             )
         return cookiejar
-    
+
     def find_device(self):
         devices = self.get_devices()
         device_sn = self.device_sn
-        
+
         if isinstance(device_sn, str) and device_sn != "":
             for device in devices:
                 if device["deviceSerialNumber"] == device_sn.strip():
@@ -364,7 +370,9 @@ class Kindle:
         book_title = book.get("title", "")
 
         # filter the brackets in the book title
-        book_title = re.sub(r"(\（[^)]*\）|\([^)]*\)|\【[^)]*\】|\[[^)]*\])", "", book_title)
+        book_title = re.sub(
+            r"(\（[^)]*\）|\([^)]*\)|\【[^)]*\】|\[[^)]*\])", "", book_title
+        )
 
         book_title = book_title.replace(" ", "")
         if book.get("category", "") == "KindleEBook":
@@ -466,27 +474,28 @@ class Kindle:
 
             out = os.path.join(self.out_dir, name)
             out_dedrm = os.path.join(self.out_dedrm_dir, name)
+            out_epub = os.path.join(self.out_epub_dir, name.split(".")[0] + ".epub")
 
-            #normally one owns no more than 9999 books
+            # normally one owns no more than 9999 books
             count_digit_length = 4
 
             size_length = 6
-            size_in_mb = round(float(total_size) / (1024*1024), 3)
-            
+            size_in_mb = round(float(total_size) / (1024 * 1024), 3)
+
             logger.info(
                 f"[{index+1:>{count_digit_length}}/{self.total_to_download:>{count_digit_length}}][{size_in_mb:> {size_length}}Mb]Downloading {name}"
             )
 
-            #try if we can writ the file
-            try :
+            # try if we can write the file
+            try:
                 pathlib.Path(out).touch()
             except OSError as e:
-                if e.errno == 36 : #means file name too long
+                if e.errno == 36:  # means file name too long
                     name = self.trim_title_suffix(title) + extname
                     logger.info(f"Original filename too long, trim to {name}")
                     out = os.path.join(self.out_dir, name)
                     out_dedrm = os.path.join(self.out_dedrm_dir, name)
-                else :
+                else:
                     logger.error(e)
 
             with open(out, "wb") as f:
@@ -501,6 +510,14 @@ class Kindle:
                     totalpids = get_pid_list(md1, md2, [self.device_serial_number], [])
                     totalpids = list(set(totalpids))
                     mb.make_drm_file(totalpids, out_dedrm)
+                    time.sleep(1)
+                    # save to EPUB
+                    epub_dir, epub_file = extract(out_dedrm)
+                    print(epub_file)
+                    shutil.copy2(epub_file, out_epub)
+                    # delete it
+                    shutil.rmtree(epub_dir)
+
                 except Exception as e:
                     logger.error("DeDRM failed for %s: %s", name, e)
                     pass
@@ -511,7 +528,7 @@ class Kindle:
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device
         device = self.find_device()
-        
+
         books = self.get_all_books(filetype=filetype, start_index=start_index)
         if start_index > 0:
             print(f"resuming the download {start_index + 1}/{self.total_to_download}")
@@ -538,7 +555,11 @@ class Kindle:
 
         with open(os.path.join(self.out_dir, "key.txt"), "w") as f:
             f.write(f"Key is: {device['deviceSerialNumber']}")
-            logger.info("the device serial number can also be found here: {0}".format(os.path.join(self.out_dir, "key.txt")))
+            logger.info(
+                "the device serial number can also be found here: {0}".format(
+                    os.path.join(self.out_dir, "key.txt")
+                )
+            )
 
     def trim_title_suffix(self, title):
         return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
