@@ -1,11 +1,16 @@
 import random
+from pathlib import Path
 
 from kindle_download_helper.user_agents import USER_AGENTS
 
 DEFAULT_OUT_DIR = "DOWNLOADS"
 DEFAULT_OUT_DEDRM_DIR = "DEDRMS"
 DEFAULT_OUT_EPUB_DIR = "EPUB"
-DEFAULT_SESSION_FILE = ".kindle_session"
+BASE_DIR = Path.home() / ".kindle_download_helper"
+BASE_DIR.mkdir(exist_ok=True)
+
+DEFAULT_SESSION_FILE = BASE_DIR / ".kindle_session"
+ERROR_LOG_FILE = BASE_DIR / "error.log"
 
 KINDLE_HEADER = {
     "User-Agent": random.choice(USER_AGENTS),

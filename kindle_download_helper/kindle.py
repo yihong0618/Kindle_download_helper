@@ -8,35 +8,34 @@ import html
 import json
 import logging
 import os
+import pathlib
 import pickle
 import re
+import shutil
 import time
 import urllib
-import pathlib
-import shutil
-from mobi import extract
 from http.cookies import SimpleCookie
 
 import requests
 import urllib3
+from mobi import extract
 from requests.adapters import HTTPAdapter
 
-from kindle_download_helper.dedrm import MobiBook, get_pid_list
 from kindle_download_helper.config import (
-    KINDLE_URLS,
-    DEFAULT_OUT_DIR,
+    CONTENT_TYPES,
     DEFAULT_OUT_DEDRM_DIR,
+    DEFAULT_OUT_DIR,
     DEFAULT_OUT_EPUB_DIR,
     DEFAULT_SESSION_FILE,
-    CONTENT_TYPES,
-    KINDLE_STAT_TEMPLATE,
-)
-from kindle_download_helper.config import (
-    MY_KINDLE_STATS_INFO_HEAD,
+    ERROR_LOG_FILE,
     KINDLE_HEADER,
-    MY_KINDLE_STATS_INFO,
+    KINDLE_STAT_TEMPLATE,
     KINDLE_TABLE_HEAD,
+    KINDLE_URLS,
+    MY_KINDLE_STATS_INFO,
+    MY_KINDLE_STATS_INFO_HEAD,
 )
+from kindle_download_helper.dedrm import MobiBook, get_pid_list
 from kindle_download_helper.utils import replace_readme_comments
 
 try:
@@ -45,7 +44,7 @@ except ModuleNotFoundError:
     print("not found browser_cookie3 here, you should use --cookie command")
 
 logger = logging.getLogger("kindle")
-fh = logging.FileHandler(".error_books.log")
+fh = logging.FileHandler(ERROR_LOG_FILE)
 fh.setLevel(logging.ERROR)
 logger.addHandler(fh)
 
@@ -309,7 +308,7 @@ class Kindle:
                         logger.info(
                             f"Amazon bot check detected, sleep {sleep_seconds} sec last time and try this api again, now index: {startIndex}/{self.total_to_download}"
                         )
-                        logger.info(f"Next time fail will break the loop")
+                        logger.info("Next time fail will break the loop")
                         r = self.session.post(
                             self.urls["payload"],
                             data={
