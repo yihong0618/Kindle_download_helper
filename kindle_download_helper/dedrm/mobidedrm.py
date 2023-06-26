@@ -23,8 +23,8 @@ __version__ = "1.0"
 # For example, ActiveState Python, which exists for windows.
 
 
-import struct
 import binascii
+import struct
 
 
 class DrmException(Exception):

@@ -8,16 +8,16 @@ __license__ = "GPL v3"
 __version__ = "6.0"
 
 
-import sys, os, re
 import getopt
-import re
-import traceback
-import time
 import html.entities
+import os
+import re
+import sys
+import time
+import traceback
 
-
-import mobidedrm
 import kgenpids
+import mobidedrm
 
 
 class DrmException(Exception):
@@ -57,7 +57,7 @@ def unicode_argv():
         # Windows, with the underlying Windows API instead replacing multi-byte
         # characters with '?'.
 
-        from ctypes import POINTER, byref, cdll, c_int, windll
+        from ctypes import POINTER, byref, c_int, cdll, windll
         from ctypes.wintypes import LPCWSTR, LPWSTR
 
         GetCommandLineW = cdll.kernel32.GetCommandLineW

@@ -9,9 +9,8 @@ __version__ = "3.0"
 
 import binascii
 import hashlib
-from struct import pack
 import traceback
-
+from struct import pack
 
 global charMap1
 global charMap3

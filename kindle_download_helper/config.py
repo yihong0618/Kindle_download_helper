@@ -68,3 +68,12 @@ MY_KINDLE_STATS_INFO = "- I bought {books_len} books\n- I pushed {pdocs_len} doc
 
 KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Read | \n | ---- | ---- | ---- | ---- | ---- |\n"
 KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {read} |\n"
+
+API_MANIFEST_URL = (
+    "https://kindle-digital-delivery.amazon.com/delivery/manifest/kindle.ebook/"
+)
+
+API_HEADERS = {
+    "User-Agent": "Comics/3.10.17[3.10.17.310418] Google/10",
+    "x-client-application": "com.comixology.comics",
+}
