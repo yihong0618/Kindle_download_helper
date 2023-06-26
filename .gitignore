@@ -134,5 +134,6 @@ dmypy.json
 # remove MacOS .DS_Store
 .DS_Store
 EPUB/
+DOWNLOADS/
 .device_id
 .tokens
