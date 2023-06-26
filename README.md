@@ -240,6 +240,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 - @[DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools)
 - @[frostming](https://github.com/frostming) GUI and a lot of work
 - @[bladewang](https://github.com/bladewang) PDOC download
+- @[athrowaway2021](https://github.com/athrowaway2021/comix) No need to have a real kindle
 
 ## 赞赏
 
