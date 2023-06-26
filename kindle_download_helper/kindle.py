@@ -377,7 +377,7 @@ class Kindle:
         if book.get("category", "") == "KindleEBook":
             book_url = book_url.format(book_id=asin)
             book_title = f"[{book_title}]({book_url})"
-        book_authors = book.get("authors")
+        book_authors = book.get("authors", "")
         if len(book_authors) > 10:
             book_authors = ",".join(book_authors.split(",")[:2]) + "..."
         # only keep date

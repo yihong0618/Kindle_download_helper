@@ -175,7 +175,12 @@ class KindleMainDialog(QtWidgets.QDialog):
         try:
             all_books = self.kindle.get_all_books(filetype=filetype)
             book_data = [
-                [item["title"], item["authors"], item["asin"], filetype]
+                [
+                    item["title"],
+                    item.get("authors", ""),
+                    item["asin"],
+                    filetype,
+                ]  # maybe no authors
                 for item in all_books
             ]
             self.book_model.updateData(book_data)
