@@ -26,7 +26,7 @@ def no_main():
         "--com",
         dest="domain",
         action="store_const",
-        const="uk",
+        const="com",
         default="cn",
         help="if your account is an amazon.co.uk account",
     )

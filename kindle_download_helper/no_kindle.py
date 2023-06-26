@@ -70,6 +70,7 @@ class NoKindle:
         self.ebooks = []
         self.pdocs = []
         self.library_dict = {}
+        self.cut_length = cut_length
 
         print("Authenticating . . .")
         self.tokens = amazon_api.login(email, password, domain)
@@ -310,8 +311,8 @@ class NoKindle:
                 cd = r.headers.get("content-disposition")
                 fn = re.findall('filename="(.+)"', cd)
                 fn = fn[0]
-            fn = os.path.join(self.out_dir, fn)
 
+            fn = pathlib.Path(self.out_dir) / pathlib.Path(fn)
             files.append(fn)
             fn.write_bytes(r.content)
             print(f"Book part successfully saved to {fn}")
@@ -325,22 +326,22 @@ class NoKindle:
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
         fn = name + "_" + asin + "_EBOK.kfx-zip"
-        fn = os.path.join(self.out_dir, fn)
-        out_epub = os.path.join(self.out_epub_dir, name.split(".")[0] + ".epub")
+        fn = pathlib.Path(self.out_dir) / pathlib.Path(fn)
+        out_epub = pathlib.Path(self.out_epub_dir) / pathlib.Path(name + ".epub")
         with ZipFile(fn, "w") as myzip:
             for file in files:
                 myzip.write(file)
                 file.unlink()
 
         fn_dec = name + "_" + asin + "_EBOK.kfx-zip.tmp"
-        fn_dec = os.path.join(name + "_" + asin + "_EBOK.kfx-zip.tmp")
         kfx_book = KFXZipBook(fn, self.tokens["device_id"])
         kfx_book.voucher = self.drm_voucher
         kfx_book.processBook()
         kfx_book.getFile(fn_dec)
         pathlib.Path(fn).unlink()
         pathlib.Path(fn_dec).rename(fn)
-        b = YJ_Book(fn)
+        print(str(fn))
+        b = YJ_Book(str(fn))
         epub_data = b.convert_to_epub()
         with open(out_epub, "wb") as f:
             f.write(epub_data)
@@ -369,7 +370,7 @@ class NoKindle:
         time.sleep(1)
         mb = MobiBook(out)
         md1, md2 = mb.get_pid_meta_info()
-        totalpids = get_pid_list(md1, md2, [self.device_serial_number], [])
+        totalpids = get_pid_list(md1, md2, [self.tokens["device_id"]], [])
         totalpids = list(set(totalpids))
         mb.make_drm_file(totalpids, out_dedrm)
         time.sleep(1)
@@ -386,11 +387,7 @@ if __name__ == "__main__":
     kindle.make_library()
     for e in kindle.ebooks:
         try:
-            # if e['ASIN'] == 'B01C7CFR5G':
-            if 1:
-                kindle.download_book(e["ASIN"])
-            else:
-                print(f"Pass: {e['ASIN']}")
+            kindle.download_book(e["ASIN"])
         except Exception as e:
             import traceback
 
