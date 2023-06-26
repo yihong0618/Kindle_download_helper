@@ -4,7 +4,7 @@ Download all your kindle books script.
 
 ![image](https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png)
 
-## 2023.06.26 如果你没有 kindle 实体设备可以用以下命令
+## 2023.06.26 如果你没有 kindle 实体设备可以用以下命令，下载后的 epub 在 EPUB 文件夹内。
 
 ```console
 pip3 install -r requirements.txt
