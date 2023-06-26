@@ -59,7 +59,7 @@ class Kindle:
         out_dir=DEFAULT_OUT_DIR,
         out_dedrm_dir=DEFAULT_OUT_DEDRM_DIR,
         out_epub_dir=DEFAULT_OUT_EPUB_DIR,
-        cut_length=100,
+        cut_length=76,
         session_file=DEFAULT_SESSION_FILE,
         **kwargs,
     ):

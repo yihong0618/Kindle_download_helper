@@ -61,7 +61,7 @@ class NoKindle:
         out_dir=DEFAULT_OUT_DIR,
         out_dedrm_dir=DEFAULT_OUT_DEDRM_DIR,
         out_epub_dir=DEFAULT_OUT_EPUB_DIR,
-        cut_length=100,
+        cut_length=76,
     ):
         self.out_dir = out_dir
         self.out_dedrm_dir = out_dedrm_dir
