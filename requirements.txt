@@ -1,4 +1,5 @@
 requests
 browser-cookie3
 mobi
+amazon.ion
 pywin32 ; sys_platform == 'win32'
