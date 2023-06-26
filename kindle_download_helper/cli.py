@@ -1,16 +1,17 @@
-from kindle_download_helper.kindle import Kindle
 import argparse
-import os
-import urllib3
-import logging
 import json
+import logging
+import os
+
+import urllib3
 
 from kindle_download_helper.config import (
-    DEFAULT_OUT_DIR,
-    DEFAULT_SESSION_FILE,
     DEFAULT_OUT_DEDRM_DIR,
+    DEFAULT_OUT_DIR,
     DEFAULT_OUT_EPUB_DIR,
+    DEFAULT_SESSION_FILE,
 )
+from kindle_download_helper.kindle import Kindle
 
 logger = logging.getLogger("kindle")
 fh = logging.FileHandler(".error_books.log")
