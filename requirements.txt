@@ -2,4 +2,12 @@ requests
 browser-cookie3
 mobi
 amazon.ion
+rich
+xmltodict
+pycryptodome
+pbkdf2
+pyaes
+pillow
+lxml
+bs4
 pywin32 ; sys_platform == 'win32'
