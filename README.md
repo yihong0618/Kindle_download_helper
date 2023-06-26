@@ -207,7 +207,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 - 如果你用 [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) 解密 key 存在 key.txt 里
 - 或者直接拖进 Calibre 里 please google it.
 - 如果过程中失败了可以使用 e.g. `--resume-from ${num}`
-- 如果出现名字太长的报错可以增加：`--cut-length 80` 来截断文件名
+- 如果出现名字太长的报错可以增加：`--cut-length 70` 来截断文件名
 - 支持推送文件下载 `--pdoc`
 - 如果有很多同名 pdoc 或 book 可以使用 `--resolve_duplicate_names` 解决同名冲突
 - error log 记录在 .error_books.log 中
@@ -221,7 +221,7 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 - If you use [DeDRM_tools](https://github.com/apprenticeharper/DeDRM_tools) to decrypt the key, it will be stored in key.txt
 - or just drag it into Calibre. Please google it.
 - If the process fails you can use e.g. `--resume-from ${num}`
-- If the name is too long, you can add: `-cut-length 80` to truncate the file name
+- If the name is too long, you can add: `-cut-length 70` to truncate the file name
 - Support push file download `--pdoc`
 - If there are many pdocs or books with the same name, you can use `--resolve_duplicate_names` to resolve conflicts with the same name.
 - error log is logged in .error_books.log
