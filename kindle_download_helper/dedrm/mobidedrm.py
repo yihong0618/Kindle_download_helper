@@ -9,7 +9,6 @@ Or you can fork it and change the code.
 """
 
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # mobidedrm.py
 # Copyright © 2008 The Dark Reverser
@@ -112,8 +111,7 @@ def get_size_of_trailing_data_entries(ptr, size, flags):
 class MobiBook:
     def __init__(self, infile):
         print(
-            "MobiDeDrm v{0:s}.\nCopyright © 2008-2020 The Dark Reverser, Apprentice Harper et al.".format(
-                __version__
+            f"MobiDeDrm v{__version__}.\nCopyright © 2008-2020 The Dark Reverser, Apprentice Harper et al.".format(
             )
         )
         # initial sanity check on file
