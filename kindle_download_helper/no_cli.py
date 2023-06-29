@@ -86,6 +86,9 @@ def no_main():
     # for epub
     if not os.path.exists(options.outepubmdir):
         os.makedirs(options.outepubmdir)
+    # for dedrm
+    if not os.path.exists(options.outdedrmdir):
+        os.makedirs(options.outdedrmdir)
 
     nk = NoKindle(options.email, options.password, options.domain)
     nk.make_library()
