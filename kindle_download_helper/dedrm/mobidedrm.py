@@ -111,8 +111,7 @@ def get_size_of_trailing_data_entries(ptr, size, flags):
 class MobiBook:
     def __init__(self, infile):
         print(
-            f"MobiDeDrm v{__version__}.\nCopyright © 2008-2020 The Dark Reverser, Apprentice Harper et al.".format(
-            )
+            f"MobiDeDrm v{__version__}.\nCopyright © 2008-2020 The Dark Reverser, Apprentice Harper et al.".format()
         )
         # initial sanity check on file
         with open(infile, "rb") as f:

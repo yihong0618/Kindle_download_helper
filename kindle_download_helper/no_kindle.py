@@ -30,6 +30,17 @@ from kindle_download_helper.third_party.ion import DrmIon, DrmIonVoucher
 from kindle_download_helper.third_party.kfxlib import YJ_Book
 
 DEBUG = False
+DEFAULT_TIMEOUT = 180
+old_send = requests.Session.send
+
+
+def new_send(*args, **kwargs):
+    if kwargs.get("timeout", None) is None:
+        kwargs["timeout"] = DEFAULT_TIMEOUT
+    return old_send(*args, **kwargs)
+
+
+requests.Session.send = new_send
 
 
 class Scope(Enum):
@@ -177,6 +188,19 @@ class NoKindle:
         )
         print(r.json())
 
+    def sidecar_bookmark(self, sidecar_url):
+        r = self.session.send(
+            amazon_api.signed_request(
+                "GET",
+                sidecar_url,
+                tokens=self.tokens,
+            )
+        )
+        try:
+            print(r.json())
+        except:
+            print(r.text)
+
     @staticmethod
     def _b64ion_to_dict(b64ion: str):
         ion = base64.b64decode(b64ion)
@@ -224,6 +248,10 @@ class NoKindle:
 
     def download_book(self, asin, error=None):
         manifest, is_kfx, info = self.get_book(asin)
+        # for r in manifest["resources"]:
+        #     if r["type"] == "KINDLE_USER_ANOT":
+        #         url = (r["endpoint"]["url"])
+        #         self.sidecar_bookmark(url)
         if not manifest:
             print(f"Error to download ASIN: {asin}, error: {str(info)}")
             return
@@ -340,7 +368,6 @@ class NoKindle:
         kfx_book.getFile(fn_dec)
         pathlib.Path(fn).unlink()
         pathlib.Path(fn_dec).rename(fn)
-        print(str(fn))
         b = YJ_Book(str(fn))
         epub_data = b.convert_to_epub()
         with open(out_epub, "wb") as f:
