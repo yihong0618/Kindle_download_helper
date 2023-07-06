@@ -9,6 +9,9 @@ Download all your kindle books script.
 ```console
 pip3 install -r requirements.txt
 python no_kindle.py -e ${email} -p ${password}
+
+# 如果你想下载推送的书
+python no_kindle.py -e ${email} -p ${password}
 ```
 
 

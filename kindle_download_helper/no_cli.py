@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+from rich import print
 
 from kindle_download_helper.config import (
     DEFAULT_OUT_DEDRM_DIR,
@@ -77,6 +78,12 @@ def no_main():
         default=DEFAULT_OUT_EPUB_DIR,
         help="dwonload output epub dir",
     )
+    parser.add_argument(
+        "--pdoc",
+        dest="pdoc",
+        action="store_true",
+        help="to download personal documents set it true",
+    )
     options = parser.parse_args()
     if options.email is None or options.password is None:
         raise Exception("Please provide email and password")
@@ -92,9 +99,16 @@ def no_main():
 
     nk = NoKindle(options.email, options.password, options.domain)
     nk.make_library()
-    for e in nk.ebooks:
+    if options.pdoc:
+        books = nk.pdocs
+    else:
+        books = nk.ebooks
+    for b in books:
         try:
-            nk.download_book(e["ASIN"])
+            if options.pdoc:
+                nk.download_pdoc(b["ASIN"])
+            else:
+                nk.download_book(b["ASIN"])
         except Exception as e:
             import traceback
 

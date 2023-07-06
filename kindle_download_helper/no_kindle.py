@@ -1,7 +1,6 @@
 import base64
 import json
-import os
-import pathlib
+from pathlib import Path
 import re
 import shutil
 import time
@@ -82,6 +81,7 @@ class NoKindle:
         self.pdocs = []
         self.library_dict = {}
         self.cut_length = cut_length
+        self.book_name_set = set()
 
         print("Authenticating . . .")
         self.tokens = amazon_api.login(email, password, domain)
@@ -248,6 +248,7 @@ class NoKindle:
 
     def download_book(self, asin, error=None):
         manifest, is_kfx, info = self.get_book(asin)
+        # TODO for bookmark
         # for r in manifest["resources"]:
         #     if r["type"] == "KINDLE_USER_ANOT":
         #         url = (r["endpoint"]["url"])
@@ -259,6 +260,48 @@ class NoKindle:
             self._download_kfx(manifest, asin)
         else:
             self._download_azw(manifest, asin)
+
+    def _save_to_epub(self, drm_file, out_epub):
+        try:
+            # save to EPUB
+            epub_dir, epub_file = extract(str(drm_file))
+            shutil.copy2(epub_file, out_epub)
+            # delete it
+            shutil.rmtree(epub_dir)
+        except Exception as e:
+            print(str(e))
+
+    def download_pdoc(self, asin):
+        """from mkb79/kindle Downloading personal added documents"""
+        url = "https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/FSDownloadContent?type=PDOC&key={asin}&is_archived_items=1&software_rev=1184370688"
+        r = self.session.send(
+            amazon_api.signed_request(
+                "GET",
+                url.format(asin=asin),
+                asin=asin,
+                tokens=self.tokens,
+            )
+        )
+        book_name = self.library_dict.get(asin)
+        # we should support the dup name here
+        name = book_name
+        if book_name in self.book_name_set:
+            name = book_name + "_" + asin[:4]
+        else:
+            self.book_name_set.add(book_name)
+        azw3_name = name + ".azw3"
+        epub_name = name + ".epub"
+        content_bytes = r.content
+        if content_bytes[0x3C : 0x3C + 8] != b"BOOKMOBI":
+            print(
+                f"Book {asin}, {book_name} faild first content {str(content_bytes[:100])}"
+            )
+            self.book_name_set.discard(book_name)
+            return
+        out_epub = Path(self.out_epub_dir) / Path(epub_name)
+        pdoc_path_drm = Path(self.out_dir) / Path(azw3_name)
+        pdoc_path_drm.write_bytes(content_bytes)
+        self._save_to_epub(pdoc_path_drm, out_epub)
 
     def _download_kfx(self, manifest, asin):
         resources = manifest["resources"]
@@ -340,13 +383,13 @@ class NoKindle:
                 fn = re.findall('filename="(.+)"', cd)
                 fn = fn[0]
 
-            fn = pathlib.Path(self.out_dir) / pathlib.Path(fn)
+            fn = Path(self.out_dir) / Path(fn)
             files.append(fn)
             fn.write_bytes(r.content)
             print(f"Book part successfully saved to {fn}")
 
         asin = manifest["content"]["id"].upper()
-        manifest_file = pathlib.Path(f"{asin}.manifest")
+        manifest_file = Path(f"{asin}.manifest")
         manifest_json_data = json.dumps(manifest)
         manifest_file.write_text(manifest_json_data)
         files.append(manifest_file)
@@ -354,8 +397,8 @@ class NoKindle:
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
         fn = name + "_" + asin + "_EBOK.kfx-zip"
-        fn = pathlib.Path(self.out_dir) / pathlib.Path(fn)
-        out_epub = pathlib.Path(self.out_epub_dir) / pathlib.Path(name + ".epub")
+        fn = Path(self.out_dir) / Path(fn)
+        out_epub = Path(self.out_epub_dir) / Path(name + ".epub")
         with ZipFile(fn, "w") as myzip:
             for file in files:
                 myzip.write(file)
@@ -366,8 +409,8 @@ class NoKindle:
         kfx_book.voucher = self.drm_voucher
         kfx_book.processBook()
         kfx_book.getFile(fn_dec)
-        pathlib.Path(fn).unlink()
-        pathlib.Path(fn_dec).rename(fn)
+        Path(fn).unlink()
+        Path(fn_dec).rename(fn)
         b = YJ_Book(str(fn))
         epub_data = b.convert_to_epub()
         with open(out_epub, "wb") as f:
@@ -387,13 +430,13 @@ class NoKindle:
         name = self.library_dict.get(asin)
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
-        out = os.path.join(self.out_dir, name + ".azw3")
-        out_epub = os.path.join(self.out_epub_dir, name + ".epub")
+        out = Path(self.out_dir) / Path(name + ".azw3")
+        out_epub = Path(self.out_epub_dir) / Path(name + ".epub")
 
         with open(out, "wb") as f:
             for chunk in r.iter_content(chunk_size=512):
                 f.write(chunk)
-        out_dedrm = os.path.join(self.out_dedrm_dir, name)
+        out_dedrm = Path(self.out_dedrm_dir) / Path(name)
         time.sleep(1)
         mb = MobiBook(out)
         md1, md2 = mb.get_pid_meta_info()
@@ -401,12 +444,7 @@ class NoKindle:
         totalpids = list(set(totalpids))
         mb.make_drm_file(totalpids, out_dedrm)
         time.sleep(1)
-        # save to EPUB
-        epub_dir, epub_file = extract(out_dedrm)
-        print(epub_file)
-        shutil.copy2(epub_file, out_epub)
-        # delete it
-        shutil.rmtree(epub_dir)
+        self._save_to_epub(out_dedrm, out_epub)
 
 
 if __name__ == "__main__":
