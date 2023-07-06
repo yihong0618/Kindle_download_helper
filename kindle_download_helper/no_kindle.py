@@ -24,6 +24,7 @@ from kindle_download_helper.config import (
     DEFAULT_OUT_EPUB_DIR,
 )
 from kindle_download_helper.dedrm import MobiBook, get_pid_list
+from kindle_download_helper.utils import trim_title_suffix
 from kindle_download_helper.dedrm.kfxdedrm import KFXZipBook
 from kindle_download_helper.third_party.ion import DrmIon, DrmIonVoucher
 from kindle_download_helper.third_party.kfxlib import YJ_Book
@@ -282,7 +283,10 @@ class NoKindle:
                 tokens=self.tokens,
             )
         )
-        book_name = self.library_dict.get(asin)
+
+        book_name = trim_title_suffix(
+            self.library_dict.get(asin, "").encode("utf8").decode()
+        )
         # we should support the dup name here
         name = book_name
         if book_name in self.book_name_set:
@@ -393,7 +397,9 @@ class NoKindle:
         manifest_json_data = json.dumps(manifest)
         manifest_file.write_text(manifest_json_data)
         files.append(manifest_file)
-        name = self.library_dict.get(asin)
+        name = trim_title_suffix(
+            self.library_dict.get(asin, "").encode("utf8").decode()
+        )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
         fn = name + "_" + asin + "_EBOK.kfx-zip"
@@ -427,7 +433,9 @@ class NoKindle:
                 tokens=self.tokens,
             )
         )
-        name = self.library_dict.get(asin)
+        name = trim_title_suffix(
+            self.library_dict.get(asin, "").encode("utf8").decode()
+        )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
         out = Path(self.out_dir) / Path(name + ".azw3")

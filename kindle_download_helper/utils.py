@@ -16,3 +16,7 @@ def replace_readme_comments(file_name, comment_str, comments_name):
         f.seek(0)
         f.write(text)
         f.truncate()
+
+
+def trim_title_suffix(title):
+    return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)

@@ -36,7 +36,7 @@ from kindle_download_helper.config import (
     MY_KINDLE_STATS_INFO_HEAD,
 )
 from kindle_download_helper.dedrm import MobiBook, get_pid_list
-from kindle_download_helper.utils import replace_readme_comments
+from kindle_download_helper.utils import replace_readme_comments, trim_title_suffix
 
 try:
     import browser_cookie3
@@ -490,7 +490,7 @@ class Kindle:
                 pathlib.Path(out).touch()
             except OSError as e:
                 if e.errno == 36:  # means file name too long
-                    name = self.trim_title_suffix(title) + extname
+                    name = trim_title_suffix(title) + extname
                     logger.info(f"Original filename too long, trim to {name}")
                     out = os.path.join(self.out_dir, name)
                     out_dedrm = os.path.join(self.out_dedrm_dir, name)
@@ -559,6 +559,3 @@ class Kindle:
                     os.path.join(self.out_dir, "key.txt")
                 )
             )
-
-    def trim_title_suffix(self, title):
-        return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
