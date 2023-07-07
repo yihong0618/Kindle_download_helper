@@ -199,6 +199,8 @@ class KindleMainDialog(QtWidgets.QDialog):
             os.makedirs(self.kindle.out_dir)
         if not os.path.exists(self.kindle.out_dedrm_dir):
             os.makedirs(self.kindle.out_dedrm_dir)
+        if not os.path.exists(self.kindle.out_epub_dir):
+            os.makedirs(self.kindle.out_epub_dir)
         self.thread = QtCore.QThread()
         iterable = self.book_model.data_to_download(mode)
         total = len(iterable)
