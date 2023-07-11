@@ -19,4 +19,7 @@ def replace_readme_comments(file_name, comment_str, comments_name):
 
 
 def trim_title_suffix(title):
-    return re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
+    new_title=re.sub(r"(（[^）]+）?|【[^】]+】?)", "", title)
+    for ch in '\/:*?"<>|':
+        new_title = new_title.replace(ch, "-")
+    return new_title
