@@ -179,7 +179,8 @@ class NoKindle:
         pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
         # for i in pdocs + ebooks:
-        for i in ebooks:
+        
+        for i in ebooks + pdocs:
             if isinstance(i["title"], dict):
                 if i["ASIN"] in self.ebook_library_dict:
                     unknow_index += 1
@@ -190,24 +191,33 @@ class NoKindle:
                 r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)", "", book_title
             )
             book_title = book_title.replace(" ", "")
-            order_id = i["origins"]["origin"]["id"]
+            is_pdoc = i.get("origins") is None
+            if not is_pdoc:
+                order_id = i["origins"]["origin"]["id"]
             if isinstance(i["authors"].get("author"), list):
                 book_authors = i.get("authors", {}).get("author")
             else:
-                if i["authors"].get("author", {}).get("#text", ""):
+                if is_pdoc:
+                    book_authors = i["authors"].get("author", "")
+                elif i["authors"].get("author", {}).get("#text", ""):
                     book_authors = i["authors"].get("author", {}).get("#text", "")
             if isinstance(book_authors, list):
                 if len(book_authors) > 2:
                     book_authors = ",".join(book_authors[:3]) + "..."
                 else:
                     book_authors = ",".join(book_authors)
-            self.ebook_library_dict[i["ASIN"]] = {
-                "title": book_title,
-                "order_id": order_id,
-                "purchase_date": i["purchase_date"],
-                "authors": book_authors,
-            }
-
+            if is_pdoc:
+                self.pdoc_library_dict[i["ASIN"]] = {
+                    "title": book_title,
+                    "authors": book_authors,
+                }
+            else:
+                self.ebook_library_dict[i["ASIN"]] = {
+                    "title": book_title,
+                    "order_id": order_id,
+                    "purchase_date": i["purchase_date"],
+                    "authors": book_authors,
+                }
         self.ebooks = ebooks
         self.pdocs = pdocs
 
@@ -407,8 +417,9 @@ class NoKindle:
         )
 
         book_name = trim_title_suffix(
-            self.pdoc_library_dict.get(asin, "").encode("utf8").decode()
+            self.pdoc_library_dict.get(asin, {}).get("title").encode("utf8").decode()
         )
+        print(book_name)
         # we should support the dup name here
         name = book_name
         if book_name in self.book_name_set:
@@ -520,7 +531,7 @@ class NoKindle:
         manifest_file.write_text(manifest_json_data)
         files.append(manifest_file)
         name = trim_title_suffix(
-            self.ebook_library_dict.get(asin, "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, {}).get("title", "").encode("utf8").decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
@@ -556,7 +567,7 @@ class NoKindle:
             )
         )
         name = trim_title_suffix(
-            self.ebook_library_dict.get(asin, "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, {}).get("title", "").encode("utf8").decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
@@ -626,6 +637,7 @@ class NoKindle:
                 """
                 )
         replace_readme_comments("my_kindle_stats.md", s, "my_kindle")
+
         ####### CSV #######
         book_list = list(self.ebook_library_dict.values())
         headers = book_list[0].keys()
