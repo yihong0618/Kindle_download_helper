@@ -90,6 +90,19 @@ def no_main():
         action="store_true",
         help="Generate your kindle memory to md and csv files",
     )
+    parser.add_argument(
+        "--only-price",
+        dest="only_price",
+        action="store_true",
+        help="Only want to get price",
+    )
+    parser.add_argument(
+        "--from-index",
+        dest="index",
+        type=int,
+        default=0,
+        help="resume from the index if download failed",
+    )
     options = parser.parse_args()
     if options.email is None or options.password is None:
         raise Exception("Please provide email and password")
@@ -107,7 +120,12 @@ def no_main():
     nk.make_library()
 
     if options.memory:
-        nk.make_ebook_memory()
+        if options.only_price and options.index > 0:
+            nk.make_ebook_memory(
+                only_price=options.only_price, from_index=options.index
+            )
+        else:
+            nk.make_ebook_memory()
         return
 
     # download books part

@@ -49,7 +49,7 @@ requests.Session.send = new_send
 
 # some same logic for kindle
 MY_KINDLE_STATS_INFO_HEAD = "## 我的 kindle 回忆\n\n"
-KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Last_READ| Highlight_Count | Price |\n | ---- | ---- | ---- | ---- | ---- |  ---- | ---- | ---- |\n"
+KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Last_READ| Highlight_Count | Price |\n| ---- | ---- | ---- | ---- | ---- |  ---- | ---- | ---- |\n"
 KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {last_read} | {highlight}| {price} | \n"
 
 
@@ -272,12 +272,15 @@ class NoKindle:
                             )  # recent and kindle.lpr are not book mark
                             break
 
-    def _make_all_ebook_price(self):
+    def _make_all_ebook_price(self, from_index=None):
         # to make sure the website cookies
         amazon_api.refresh(self.tokens)
         s = time.time()
         self.price_index = 0
         for k, v in self.ebook_library_dict.items():
+            if isinstance(from_index, int) and self.price_index < from_index:
+                self.price_index += 1
+                continue
             self.price_index += 1
             if self.price_index % 100 == 0:
                 # refresh the cookie to make sure it
@@ -638,9 +641,10 @@ class NoKindle:
             # spider rule
             time.sleep(1)
 
-    def make_ebook_memory(self):
-        self._make_all_ebook_price()
-        self.make_all_ebook_info()
+    def make_ebook_memory(self, from_index=None, only_price=False):
+        self._make_all_ebook_price(from_index=from_index)
+        if not only_price:
+            self.make_all_ebook_info()
         s = MY_KINDLE_STATS_INFO_HEAD
         s += KINDLE_TABLE_HEAD
         index = 1
@@ -663,15 +667,23 @@ class NoKindle:
 <!--END_SECTION:my_kindle-->
                 """
                 )
-        replace_readme_comments("my_kindle_stats.md", s, "my_kindle")
+        if not only_price:
+            replace_readme_comments("my_kindle_stats.md", s, "my_kindle")
 
         ####### CSV #######
         book_list = list(self.ebook_library_dict.values())
+        if only_price:
+            book_list = book_list[from_index:]
         headers = book_list[0].keys()
 
         import csv
 
-        with open("my_kindle_stats.csv", "w", newline="") as csvfile:
+        csv_name = (
+            "my_kindle_stats.csv"
+            if not only_price
+            else "my_kindle_stats_only_price.csv"
+        )
+        with open(csv_name, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
 
             writer.writeheader()
