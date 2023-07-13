@@ -49,7 +49,7 @@ requests.Session.send = new_send
 
 # some same logic for kindle
 MY_KINDLE_STATS_INFO_HEAD = "## 我的 kindle 回忆\n\n"
-KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Last_READ| Highlight_Count | Price | \n | ---- | ---- | ---- | ---- | ---- |  ---- | ---- | ---- |\n"
+KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Last_READ| Highlight_Count | Price |\n | ---- | ---- | ---- | ---- | ---- |  ---- | ---- | ---- |\n"
 KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {last_read} | {highlight}| {price} | \n"
 
 
@@ -250,6 +250,7 @@ class NoKindle:
             if not manifest:
                 print(f"Error to download ASIN: {asin}, error: {str(info)}")
                 continue
+            print(f"Getting highlight book: {v['title']}")
             for r in manifest["resources"]:
                 if r["type"] == "KINDLE_USER_ANOT":
                     url = r["endpoint"]["url"]
@@ -265,7 +266,7 @@ class NoKindle:
                             v["highlight_count"] = (
                                 len(records) - 2
                             )  # recent and kindle.lpr are not book mark
-                            continue
+                            break 
 
     def _make_all_ebook_price(self):
         # to make sure the website cookies
