@@ -179,7 +179,7 @@ class NoKindle:
         pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
         # for i in pdocs + ebooks:
-        
+
         for i in ebooks + pdocs:
             if isinstance(i["title"], dict):
                 if i["ASIN"] in self.ebook_library_dict:
@@ -242,7 +242,9 @@ class NoKindle:
 
     def make_all_ebook_info(self):
         # TODO pdoc
+        self.highlight_index = 0
         for asin, v in self.ebook_library_dict.items():
+            self.highlight_index += 1
             # for easily generate csv file
             v["last_read"] = ""
             v["highlight_count"] = ""
@@ -250,7 +252,9 @@ class NoKindle:
             if not manifest:
                 print(f"Error to download ASIN: {asin}, error: {str(info)}")
                 continue
-            print(f"Getting highlight book: {v['title']}")
+            print(
+                f"[{self.highlight_index} / {len(self.ebooks)}] Getting highlight book: {v['title']}"
+            )
             for r in manifest["resources"]:
                 if r["type"] == "KINDLE_USER_ANOT":
                     url = r["endpoint"]["url"]
@@ -266,19 +270,29 @@ class NoKindle:
                             v["highlight_count"] = (
                                 len(records) - 2
                             )  # recent and kindle.lpr are not book mark
-                            break 
+                            break
 
     def _make_all_ebook_price(self):
         # to make sure the website cookies
         amazon_api.refresh(self.tokens)
         s = time.time()
+        self.price_index = 0
         for k, v in self.ebook_library_dict.items():
+            self.price_index += 1
+            if self.price_index % 100 == 0:
+                # refresh the cookie to make sure it
+                amazon_api.refresh(self.tokens)
+                self.session = cloudscraper.create_scraper()
             try:
                 self._make_one_book_price(v)
                 # spider rule
                 time.sleep(1)
             except Exception as e:
+                amazon_api.refresh(self.tokens)
+                self.session = cloudscraper.create_scraper()
                 print(f"{k} error {str(e)}")
+                self.error_price_list.append(v)
+
         l = len(self.ebooks)
         index = 0
         while self.error_price_list and index < l * 2:
@@ -291,10 +305,12 @@ class NoKindle:
             # to make sure we do not have forever loop here
             index += 1
         print(f"Get all price cost: {time.time() - s}")
+        self.price_index = 0
 
     def _make_one_book_price(self, v):
         order_id = v.get("order_id")
         if not order_id:
+            print(f"No order id for {v['title']}")
             return
         url = f"https://www.amazon.{self.domain}/gp/digital/your-account/order-summary.html?ie=UTF8&orderID={order_id}&print=1"
         self.session.cookies = cookiejar_from_dict(self.tokens["website_cookies"])
@@ -308,7 +324,7 @@ class NoKindle:
                     "GET",
                     url,
                     tokens=self.tokens,
-                )
+                ),
             )
             if r.text.find("developer.amazonservices.com") != -1:
                 # another chance.
@@ -322,7 +338,7 @@ class NoKindle:
                     return
                 price = price_re[0].replace("￥", "").replace(" ", "").replace("：", "")
                 print(
-                    f"Order: {order_id}, Book: {v.get('title', '')} Price: {price} Done"
+                    f"[{self.price_index} / {len(self.ebooks)}] Order: {order_id}, Book: {v.get('title', '')} Price: {price} Done"
                 )
                 v["price"] = price
                 break
@@ -536,7 +552,10 @@ class NoKindle:
         manifest_file.write_text(manifest_json_data)
         files.append(manifest_file)
         name = trim_title_suffix(
-            self.ebook_library_dict.get(asin, {}).get("title", "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, {})
+            .get("title", "")
+            .encode("utf8")
+            .decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
@@ -572,7 +591,10 @@ class NoKindle:
             )
         )
         name = trim_title_suffix(
-            self.ebook_library_dict.get(asin, {}).get("title", "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, {})
+            .get("title", "")
+            .encode("utf8")
+            .decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
