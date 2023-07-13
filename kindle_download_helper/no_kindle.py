@@ -194,8 +194,9 @@ class NoKindle:
             is_pdoc = i.get("origins") is None
             if not is_pdoc:
                 order_id = i["origins"]["origin"]["id"]
-            if isinstance(i["authors"].get("author"), list):
-                book_authors = i.get("authors", {}).get("author")
+            
+            if isinstance(i.get("authors", {}).get("author"), list):
+                book_authors = i.get("authors", {}).get("author", "")
             else:
                 if is_pdoc:
                     book_authors = i["authors"].get("author", "")
