@@ -650,6 +650,7 @@ class NoKindle:
             writer.writeheader()
             for row in book_list:
                 writer.writerow(row)
+        print("File: my_kindle_stats.csv and my_kindle_stats.md have been generated")
 
 
 if __name__ == "__main__":
