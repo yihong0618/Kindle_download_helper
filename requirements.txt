@@ -10,4 +10,5 @@ pyaes
 pillow
 lxml
 bs4
+cloudscraper
 pywin32 ; sys_platform == 'win32'

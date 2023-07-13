@@ -203,14 +203,33 @@ def refresh(tokens):
         "source_token": tokens["refresh_token"],
         "requested_token_type": "access_token",
     }
-
-    response_json = requests.post(
+    s = requests.Session()
+    response_json = s.post(
         f"https://api.amazon.com/auth/token",
         headers=get_auth_headers(tokens["domain"]),
         json=body,
     ).json()
+
+    t = response_json["access_token"]
+    data = {
+        "app_name": APP_NAME,
+        "app_version": APP_VERSION,
+        "source_token_type": "refresh_token",
+        "source_token": t,
+        "requested_token_type": "auth_cookies",
+        "domain": f".amazon.{tokens['domain']}",
+    }
+    url = f"https://www.amazon.{tokens['domain']}/ap/exchangetoken"
+    r = s.post(url, headers=get_auth_headers(tokens["domain"]), data=data)
+    raw_cookies = r.json()["response"]["tokens"]["cookies"]
+    website_cookies = {}
+    for domain_cookies in raw_cookies:
+        for cookie in raw_cookies[domain_cookies]:
+            website_cookies[cookie["Name"]] = cookie["Value"].replace(r'"', r"")
+
     try:
         tokens["access_token"] = response_json["access_token"]
+        tokens["website_cookies"] = website_cookies
     except:
         print(json.dumps(response_json))
     return tokens
@@ -290,10 +309,8 @@ def register_device(tokens=None):
         "Expect": "",
     }
     body = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?><request><parameters><deviceType>{DEVICE_TYPE}</deviceType><deviceSerialNumber>{tokens['device_id']}</deviceSerialNumber><pid>{PID}</pid><deregisterExisting>false</deregisterExisting><softwareVersion>{SW_VERSION}</softwareVersion><softwareComponentId>{APP_NAME}</softwareComponentId><authToken>{tokens['access_token']}</authToken><authTokenType>ACCESS_TOKEN</authTokenType></parameters></request>"
-
-    resp = requests.Session().send(
-        signed_request("POST", url, headers, body, tokens=tokens)
-    )
+    s = requests.session()
+    resp = s.send(signed_request("POST", url, headers, body, tokens=tokens))
 
     if resp.status_code == 200:
         parsed_response = xmltodict.parse(resp.text)

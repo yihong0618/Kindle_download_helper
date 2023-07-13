@@ -137,3 +137,5 @@ EPUB/
 DOWNLOADS/
 .device_id
 .tokens
+*.csv
+my_kindle_stats.md

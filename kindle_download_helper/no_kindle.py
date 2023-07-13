@@ -2,15 +2,19 @@ import base64
 import json
 from pathlib import Path
 import re
+import os
 import shutil
+import random
 import time
 from collections import namedtuple
 from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from zipfile import ZipFile
+import cloudscraper
 
 import requests
+from requests.utils import cookiejar_from_dict
 import xmltodict
 from amazon.ion import simpleion
 from mobi import extract
@@ -23,8 +27,9 @@ from kindle_download_helper.config import (
     DEFAULT_OUT_DIR,
     DEFAULT_OUT_EPUB_DIR,
 )
+from kindle_download_helper.user_agents import USER_AGENTS
 from kindle_download_helper.dedrm import MobiBook, get_pid_list
-from kindle_download_helper.utils import trim_title_suffix
+from kindle_download_helper.utils import trim_title_suffix, replace_readme_comments
 from kindle_download_helper.dedrm.kfxdedrm import KFXZipBook
 from kindle_download_helper.third_party.ion import DrmIon, DrmIonVoucher
 from kindle_download_helper.third_party.kfxlib import YJ_Book
@@ -41,6 +46,11 @@ def new_send(*args, **kwargs):
 
 
 requests.Session.send = new_send
+
+# some same logic for kindle
+MY_KINDLE_STATS_INFO_HEAD = "## 我的 kindle 回忆\n\n"
+KINDLE_TABLE_HEAD = "| ID | Title | Authors | Acquired | Last_READ| Highlight_Count | Price | \n | ---- | ---- | ---- | ---- | ---- |  ---- | ---- | ---- |\n"
+KINDLE_STAT_TEMPLATE = "| {id} | {title} | {authors} | {acquired} | {last_read} | {highlight}| {price} | \n"
 
 
 class Scope(Enum):
@@ -74,15 +84,18 @@ class NoKindle:
         out_epub_dir=DEFAULT_OUT_EPUB_DIR,
         cut_length=76,
     ):
+        self.domain = domain
         self.out_dir = out_dir
         self.out_dedrm_dir = out_dedrm_dir
         self.out_epub_dir = out_epub_dir
-        self.session = requests.Session()
+        self.session = cloudscraper.create_scraper()
         self.ebooks = []
         self.pdocs = []
-        self.library_dict = {}
+        self.ebook_library_dict = {}
+        self.pdoc_library_dict = {}
         self.cut_length = cut_length
         self.book_name_set = set()
+        self.error_price_list = []
 
         print("Authenticating . . .")
         self.tokens = amazon_api.login(email, password, domain)
@@ -162,18 +175,38 @@ class NoKindle:
         library = json.loads(json.dumps(library))
         library = library["response"]["add_update_list"]
         ebooks = [i for i in library["meta_data"] if i["cde_contenttype"] == "EBOK"]
-        pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         ebooks = [e for e in ebooks if e["origins"]["origin"]["type"] == "Purchase"]
+        pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
-        for i in pdocs + ebooks:
+        # for i in pdocs + ebooks:
+        for i in ebooks:
             if isinstance(i["title"], dict):
-                if i["ASIN"] in self.library_dict:
+                if i["ASIN"] in self.ebook_library_dict:
                     unknow_index += 1
-                self.library_dict[i["ASIN"]] = i["title"].get(
-                    "#text", str(unknow_index)
-                )
+                book_title = i["title"].get("#text", str(unknow_index))
             else:
-                self.library_dict[i["ASIN"]] = i["title"]
+                book_title = i["title"]
+            book_title = re.sub(
+                r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)", "", book_title
+            )
+            book_title = book_title.replace(" ", "")
+            order_id = i["origins"]["origin"]["id"]
+            if isinstance(i["authors"].get("author"), list):
+                book_authors = i.get("authors", {}).get("author")
+            else:
+                if i["authors"].get("author", {}).get("#text", ""):
+                    book_authors = i["authors"].get("author", {}).get("#text", "")
+            if isinstance(book_authors, list):
+                if len(book_authors) > 2:
+                    book_authors = ",".join(book_authors[:3]) + "..."
+                else:
+                    book_authors = ",".join(book_authors)
+            self.ebook_library_dict[i["ASIN"]] = {
+                "title": book_title,
+                "order_id": order_id,
+                "purchase_date": i["purchase_date"],
+                "authors": book_authors,
+            }
 
         self.ebooks = ebooks
         self.pdocs = pdocs
@@ -189,6 +222,99 @@ class NoKindle:
         )
         print(r.json())
 
+    def make_all_pdoc_info(self):
+        # TODO
+        pass
+
+    def make_all_ebook_info(self):
+        # TODO pdoc
+        for asin, v in self.ebook_library_dict.items():
+            # for easily generate csv file
+            v["last_read"] = ""
+            v["highlight_count"] = ""
+            manifest, _, info = self.get_book(asin)
+            if not manifest:
+                print(f"Error to download ASIN: {asin}, error: {str(info)}")
+                continue
+            for r in manifest["resources"]:
+                if r["type"] == "KINDLE_USER_ANOT":
+                    url = r["endpoint"]["url"]
+                    book_mark_info = self.sidecar_bookmark(url)
+                    if not book_mark_info:
+                        continue
+                    records = book_mark_info["payload"]["records"]
+                    if not records:
+                        continue
+                    for record in records:
+                        if record.get("type", "") == "kindle.most_recent_read":
+                            v["last_read"] = record.get("creationTime")
+                            v["highlight_count"] = (
+                                len(records) - 2
+                            )  # recent and kindle.lpr are not book mark
+                            continue
+
+    def _make_all_ebook_price(self):
+        # to make sure the website cookies
+        amazon_api.refresh(self.tokens)
+        s = time.time()
+        for k, v in self.ebook_library_dict.items():
+            try:
+                self._make_one_book_price(v)
+                # spider rule
+                time.sleep(1)
+            except Exception as e:
+                print(f"{k} error {str(e)}")
+        l = len(self.ebooks)
+        index = 0
+        while self.error_price_list and index < l * 2:
+            print(f"Left: {len(self.error_price_list)}, Try index: {index}: {l*2}")
+            try:
+                error_b = self.error_price_list.pop(0)
+                self._make_one_book_price(error_b)
+            except:
+                self.error_price_list.append(error_b)
+            # to make sure we do not have forever loop here
+            index += 1
+        print(f"Get all price cost: {time.time() - s}")
+
+    def _make_one_book_price(self, v):
+        order_id = v.get("order_id")
+        if not order_id:
+            return
+        url = f"https://www.amazon.{self.domain}/gp/digital/your-account/order-summary.html?ie=UTF8&orderID={order_id}&print=1"
+        self.session.cookies = cookiejar_from_dict(self.tokens["website_cookies"])
+
+        for i in range(3):
+            self.session.headers = {
+                "User-Agent": random.choice(USER_AGENTS),
+            }
+            r = self.session.send(
+                amazon_api.signed_request(
+                    "GET",
+                    url,
+                    tokens=self.tokens,
+                )
+            )
+            if r.text.find("developer.amazonservices.com") != -1:
+                # another chance.
+                print(f"Sleep {i+2}, Another chance for {order_id}")
+                time.sleep(i + 2)
+            else:
+                # if you are on other contries or other languages PR welcome here
+                price_re = re.findall("订单总额(.*)</b>", r.text)
+                if not price_re:
+                    v["price"] = ""
+                    return
+                price = price_re[0].replace("￥", "").replace(" ", "").replace("：", "")
+                print(
+                    f"Order: {order_id}, Book: {v.get('title', '')} Price: {price} Done"
+                )
+                v["price"] = price
+                break
+        else:
+            print(f"Order error to error list {order_id}")
+            self.error_price_list.append(v)
+
     def sidecar_bookmark(self, sidecar_url):
         r = self.session.send(
             amazon_api.signed_request(
@@ -198,9 +324,10 @@ class NoKindle:
             )
         )
         try:
-            print(r.json())
+            # tricky
+            return r.json()
         except:
-            print(r.text)
+            return None
 
     @staticmethod
     def _b64ion_to_dict(b64ion: str):
@@ -249,11 +376,6 @@ class NoKindle:
 
     def download_book(self, asin, error=None):
         manifest, is_kfx, info = self.get_book(asin)
-        # TODO for bookmark
-        # for r in manifest["resources"]:
-        #     if r["type"] == "KINDLE_USER_ANOT":
-        #         url = (r["endpoint"]["url"])
-        #         self.sidecar_bookmark(url)
         if not manifest:
             print(f"Error to download ASIN: {asin}, error: {str(info)}")
             return
@@ -285,7 +407,7 @@ class NoKindle:
         )
 
         book_name = trim_title_suffix(
-            self.library_dict.get(asin, "").encode("utf8").decode()
+            self.pdoc_library_dict.get(asin, "").encode("utf8").decode()
         )
         # we should support the dup name here
         name = book_name
@@ -398,7 +520,7 @@ class NoKindle:
         manifest_file.write_text(manifest_json_data)
         files.append(manifest_file)
         name = trim_title_suffix(
-            self.library_dict.get(asin, "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, "").encode("utf8").decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
@@ -434,7 +556,7 @@ class NoKindle:
             )
         )
         name = trim_title_suffix(
-            self.library_dict.get(asin, "").encode("utf8").decode()
+            self.ebook_library_dict.get(asin, "").encode("utf8").decode()
         )
         if len(name) > self.cut_length:
             name = name[: self.cut_length - 10]
@@ -454,17 +576,70 @@ class NoKindle:
         time.sleep(1)
         self._save_to_epub(out_dedrm, out_epub)
 
+    def download_all_ebooks(self):
+        for b in self.ebooks:
+            try:
+                self.download_book(b["ASIN"])
+            except Exception as e:
+                import traceback
+
+                traceback.print_exc()
+                print(e)
+            # spider rule
+            time.sleep(1)
+
+    def download_all_pdocs(self):
+        for b in self.pdocs:
+            try:
+                self.download_pdoc(b["ASIN"])
+            except Exception as e:
+                import traceback
+
+                traceback.print_exc()
+                print(e)
+            # spider rule
+            time.sleep(1)
+
+    def make_ebook_memory(self):
+        self._make_all_ebook_price()
+        self.make_all_ebook_info()
+        s = MY_KINDLE_STATS_INFO_HEAD
+        s += KINDLE_TABLE_HEAD
+        index = 1
+        headers = None
+        for _, book_info in self.ebook_library_dict.items():
+            s += KINDLE_STAT_TEMPLATE.format(
+                id=str(index),
+                title=book_info.get("title", ""),
+                authors=book_info.get("authors", ""),
+                acquired=book_info.get("purchase_date", "")[:10],
+                last_read=book_info.get("last_read", "")[:10],
+                highlight=book_info.get("highlight_count", ""),
+                price=book_info.get("price", ""),
+            )
+            index += 1
+        if not os.path.exists("my_kindle_stats.md"):
+            with open("my_kindle_stats.md", "a") as f:
+                f.write(
+                    """<!--START_SECTION:my_kindle-->
+<!--END_SECTION:my_kindle-->
+                """
+                )
+        replace_readme_comments("my_kindle_stats.md", s, "my_kindle")
+        ####### CSV #######
+        book_list = list(self.ebook_library_dict.values())
+        headers = book_list[0].keys()
+
+        import csv
+
+        with open("my_kindle_stats.csv", "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+
+            writer.writeheader()
+            for row in book_list:
+                writer.writerow(row)
+
 
 if __name__ == "__main__":
     kindle = NoKindle()
     kindle.make_library()
-    for e in kindle.ebooks:
-        try:
-            kindle.download_book(e["ASIN"])
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            print(e)
-        # spider rule
-        time.sleep(1)

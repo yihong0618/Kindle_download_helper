@@ -84,6 +84,12 @@ def no_main():
         action="store_true",
         help="to download personal documents set it true",
     )
+    parser.add_argument(
+        "--memory",
+        dest="memory",
+        action="store_true",
+        help="Generate your kindle memory to md and csv files",
+    )
     options = parser.parse_args()
     if options.email is None or options.password is None:
         raise Exception("Please provide email and password")
@@ -99,23 +105,16 @@ def no_main():
 
     nk = NoKindle(options.email, options.password, options.domain)
     nk.make_library()
-    if options.pdoc:
-        books = nk.pdocs
-    else:
-        books = nk.ebooks
-    for b in books:
-        try:
-            if options.pdoc:
-                nk.download_pdoc(b["ASIN"])
-            else:
-                nk.download_book(b["ASIN"])
-        except Exception as e:
-            import traceback
 
-            traceback.print_exc()
-            print(e)
-        # spider rule
-        time.sleep(1)
+    if options.memory:
+        nk.make_ebook_memory()
+        return
+
+    # download books part
+    if options.pdoc:
+        nk.download_all_pdocs()
+    else:
+        nk.download_all_ebooks()
 
 
 if __name__ == "__main__":
