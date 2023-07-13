@@ -146,6 +146,8 @@ def generate_frc(device_id):
 
 def login(email, password, domain="com", device_id=DEVICE_ID):
     is_com = domain == "com"
+    if is_com:
+        device_id = DEVICE_ID_COM
     tokens = get_tokens(is_com=is_com)
     if (
         tokens
