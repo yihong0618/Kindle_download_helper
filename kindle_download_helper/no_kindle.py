@@ -335,11 +335,22 @@ class NoKindle:
                 time.sleep(i + 2)
             else:
                 # if you are on other contries or other languages PR welcome here
-                price_re = re.findall("订单总额(.*)</b>", r.text)
+                # TODO
+                if self.domain == "cn":
+                    price_re = re.findall("订单总额(.*)</b>", r.text)
+                else:
+                    price_re = re.findall("Total for this Order:(.*)</b>", r.text)
                 if not price_re:
                     v["price"] = ""
                     return
-                price = price_re[0].replace("￥", "").replace(" ", "").replace("：", "")
+                price = (
+                    price_re[0]
+                    .replace("￥", "")
+                    .replace(" ", "")
+                    .replace("：", "")
+                    .replace("$", "")
+                    .replace(":", "")
+                )
                 print(
                     f"[{self.price_index} / {len(self.ebooks)}] Order: {order_id}, Book: {v.get('title', '')} Price: {price} Done"
                 )

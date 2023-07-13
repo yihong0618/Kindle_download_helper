@@ -22,6 +22,8 @@ from Crypto.Signature import pkcs1_15
 SCRIPT_PATH = os.path.dirname(os.path.realpath(sys.argv[0]))
 DEVICE_ID_PATH = os.path.join(SCRIPT_PATH, ".device_id")
 TOKENS_PATH = os.path.join(SCRIPT_PATH, ".tokens")
+DEVICE_ID_PATH_COM = os.path.join(SCRIPT_PATH, ".device_id.com")
+TOKENS_PATH_COM = os.path.join(SCRIPT_PATH, ".tokens.com")
 
 if os.path.isfile(DEVICE_ID_PATH):
     with open(DEVICE_ID_PATH, "r") as f:
@@ -31,15 +33,35 @@ else:
         DEVICE_ID = secrets.token_hex(16)
         f.write(DEVICE_ID)
 
+if os.path.isfile(DEVICE_ID_PATH_COM):
+    with open(DEVICE_ID_PATH_COM, "r") as f:
+        DEVICE_ID_COM = f.read()
+else:
+    with open(DEVICE_ID_PATH_COM, "w") as f:
+        DEVICE_ID_COM = secrets.token_hex(16)
+        f.write(DEVICE_ID_COM)
+
+
 PID = hashlib.sha256(DEVICE_ID.encode()).hexdigest()[23:31].upper()
+PID_COM = hashlib.sha256(DEVICE_ID_COM.encode()).hexdigest()[23:31].upper()
 
 
-def save_tokens(tokens):
-    with open(TOKENS_PATH, "w") as f:
-        f.write(json.dumps(tokens))
+def save_tokens(tokens, is_com=False):
+    if is_com:
+        with open(TOKENS_PATH_COM, "w") as f:
+            f.write(json.dumps(tokens))
+    else:
+        with open(TOKENS_PATH, "w") as f:
+            f.write(json.dumps(tokens))
 
 
-def get_tokens():
+def get_tokens(is_com=False):
+    if is_com:
+        if os.path.isfile(TOKENS_PATH_COM):
+            with open(TOKENS_PATH_COM, "r") as f:
+                return json.loads(f.read())
+        else:
+            return None
     if os.path.isfile(TOKENS_PATH):
         with open(TOKENS_PATH, "r") as f:
             return json.loads(f.read())
@@ -123,8 +145,13 @@ def generate_frc(device_id):
 
 
 def login(email, password, domain="com", device_id=DEVICE_ID):
-    tokens = get_tokens()
-    if tokens and tokens["name"] == hashlib.md5(email.encode()).hexdigest():
+    is_com = domain == "com"
+    tokens = get_tokens(is_com=is_com)
+    if (
+        tokens
+        and tokens["name"] == hashlib.md5(email.encode()).hexdigest()
+        and tokens["domain"] == domain
+    ):
         return refresh(tokens)
 
     body = {
@@ -189,7 +216,7 @@ def login(email, password, domain="com", device_id=DEVICE_ID):
                 "adp_token"
             ],
         }
-        return register_device(tokens)
+        return register_device(tokens, is_com=is_com)
     except:
         print(json.dumps(response_json))
         return None
@@ -299,7 +326,7 @@ def signed_request(
     return requests.Request(method, url, headers, data=body).prepare()
 
 
-def register_device(tokens=None):
+def register_device(tokens=None, is_com=False):
     if not tokens:
         tokens = get_tokens()
 
@@ -308,7 +335,8 @@ def register_device(tokens=None):
         "Content-Type": "text/xml",
         "Expect": "",
     }
-    body = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?><request><parameters><deviceType>{DEVICE_TYPE}</deviceType><deviceSerialNumber>{tokens['device_id']}</deviceSerialNumber><pid>{PID}</pid><deregisterExisting>false</deregisterExisting><softwareVersion>{SW_VERSION}</softwareVersion><softwareComponentId>{APP_NAME}</softwareComponentId><authToken>{tokens['access_token']}</authToken><authTokenType>ACCESS_TOKEN</authTokenType></parameters></request>"
+    pid = PID_COM if is_com else PID
+    body = f"<?xml version=\"1.0\" encoding=\"UTF-8\"?><request><parameters><deviceType>{DEVICE_TYPE}</deviceType><deviceSerialNumber>{tokens['device_id']}</deviceSerialNumber><pid>{pid}</pid><deregisterExisting>false</deregisterExisting><softwareVersion>{SW_VERSION}</softwareVersion><softwareComponentId>{APP_NAME}</softwareComponentId><authToken>{tokens['access_token']}</authToken><authTokenType>ACCESS_TOKEN</authTokenType></parameters></request>"
     s = requests.session()
     resp = s.send(signed_request("POST", url, headers, body, tokens=tokens))
 
@@ -317,7 +345,7 @@ def register_device(tokens=None):
         tokens["device_private_key"] = parsed_response["response"]["device_private_key"]
         tokens["adp_token"] = parsed_response["response"]["adp_token"]
 
-    save_tokens(tokens)
+    save_tokens(tokens, is_com=is_com)
     return tokens
 
 

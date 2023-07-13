@@ -136,6 +136,8 @@ dmypy.json
 EPUB/
 DOWNLOADS/
 .device_id
+.device_id.com
 .tokens
+.tokens.com
 *.csv
 my_kindle_stats.md
