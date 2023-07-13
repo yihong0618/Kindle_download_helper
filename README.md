@@ -12,6 +12,9 @@ python no_kindle.py -e ${email} -p ${password}
 
 # 如果你想下载推送的书
 python no_kindle.py -e ${email} -p ${password}
+
+# 你可以生成所有你电子书的购买记录，笔记记录来分析展示
+python no_kindle.py -e ${email} -p ${password} --memory
 ```
 
 
