@@ -631,7 +631,7 @@ class NoKindle:
         self._save_to_epub(out_dedrm, out_epub)
 
     def download_all_ebooks(self):
-        for b in self.ebooks[18:]:
+        for b in self.ebooks:
             try:
                 self.download_book(b["ASIN"])
             except Exception as e:
