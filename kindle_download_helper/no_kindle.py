@@ -175,10 +175,13 @@ class NoKindle:
         library = json.loads(json.dumps(library))
         library = library["response"]["add_update_list"]
         ebooks = [i for i in library["meta_data"] if i["cde_contenttype"] == "EBOK"]
-        ebooks = [e for e in ebooks if e["origins"]["origin"]["type"] == "Purchase"]
+        ebooks = [
+            e
+            for e in ebooks
+            if e.get("origins", {}).get("origin", {}).get("type", "") == "Purchase"
+        ]
         pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
-        # for i in pdocs + ebooks:
 
         for i in ebooks + pdocs:
             if isinstance(i["title"], dict):
@@ -514,7 +517,6 @@ class NoKindle:
                     "X-ADP-AttemptCount": "1",
                     "X-ADP-CorrelationId": correlation_id,
                     "X-ADP-Transport": str(manifest["responseContext"]["transport"]),
-                    "X-ADP-Reason": str(manifest["responseContext"]["reason"]),
                     "x-amzn-accept-type": "application/x.amzn.digital.deliverymanifest@1.0",
                     "X-ADP-SW": str(manifest["responseContext"]["swVersion"]),
                     "X-ADP-LTO": "60",
@@ -629,7 +631,7 @@ class NoKindle:
         self._save_to_epub(out_dedrm, out_epub)
 
     def download_all_ebooks(self):
-        for b in self.ebooks:
+        for b in self.ebooks[18:]:
             try:
                 self.download_book(b["ASIN"])
             except Exception as e:

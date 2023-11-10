@@ -522,7 +522,9 @@ class Kindle:
                     pass
         except Exception as e:
             logger.error(str(e))
-            logger.error(f"Index: {index + 1}, Title: {title}, Asin: {asin} download failed")
+            logger.error(
+                f"Index: {index + 1}, Title: {title}, Asin: {asin} download failed"
+            )
 
     def download_books(self, start_index=0, filetype="EBOK"):
         # use default device

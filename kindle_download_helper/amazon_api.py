@@ -183,6 +183,7 @@ def login(email, password, domain="com", device_id=DEVICE_ID):
             "device_os_family": "android",
             "device_type": DEVICE_TYPE,
             "device_serial": device_id,
+            "mac_address": secrets.token_hex(64).upper(),
             "manufacturer": MANUFACTURER,
             "model": DEVICE_NAME,
             "os_version": "30",
@@ -346,7 +347,6 @@ def register_device(tokens=None, is_com=False):
         parsed_response = xmltodict.parse(resp.text)
         tokens["device_private_key"] = parsed_response["response"]["device_private_key"]
         tokens["adp_token"] = parsed_response["response"]["adp_token"]
-
     save_tokens(tokens, is_com=is_com)
     return tokens
 
