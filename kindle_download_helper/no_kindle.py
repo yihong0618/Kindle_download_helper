@@ -227,7 +227,11 @@ class NoKindle:
     @staticmethod
     def _is_ebook(book_info):
         # https://github.com/yihong0618/Kindle_download_helper/issues/149#issuecomment-1805966855
+        # TODO maybe refactor
         if not isinstance(book_info.get("origins"), dict):
+            return False
+        # https://github.com/yihong0618/Kindle_download_helper/issues/149#issuecomment-1806748160
+        if not isinstance(book_info.get("origins", {}).get("origin"), dict):
             return False
         return (
             book_info.get("origins", {}).get("origin", {}).get("type", "") == "Purchase"
