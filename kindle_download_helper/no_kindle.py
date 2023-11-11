@@ -175,11 +175,7 @@ class NoKindle:
         library = json.loads(json.dumps(library))
         library = library["response"]["add_update_list"]
         ebooks = [i for i in library["meta_data"] if i["cde_contenttype"] == "EBOK"]
-        ebooks = [
-            e
-            for e in ebooks
-            if e.get("origins", {}).get("origin", {}).get("type", "") == "Purchase"
-        ]
+        ebooks = [e for e in ebooks if self._is_ebook(e)]
         pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
 
@@ -227,6 +223,15 @@ class NoKindle:
                 }
         self.ebooks = ebooks
         self.pdocs = pdocs
+
+    @staticmethod
+    def _is_ebook(book_info):
+        # https://github.com/yihong0618/Kindle_download_helper/issues/149#issuecomment-1805966855
+        if not isinstance(book_info.get("origins"), dict):
+            return False
+        return (
+            book_info.get("origins", {}).get("origin", {}).get("type", "") == "Purchase"
+        )
 
     def sidecar_ebook(self, asin):
         url = f"https://sars.amazon.com/sidecar/sa/EBOK/{asin}"
