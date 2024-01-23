@@ -74,9 +74,9 @@ optional arguments:
   --cut-length CUT_LENGTH
                         truncate the file name
   -o OUTDIR, --outdir OUTDIR
-                        dwonload output dir
+                        download output dir
   -od OUTDEDRMDIR, --outdedrmdir OUTDEDRMDIR
-                        dwonload output dedrm dir
+                        download output dedrm dir
   -s SESSION_FILE, --session-file SESSION_FILE
                         The reusable session dump file
   --pdoc                to download personal documents or ebook
