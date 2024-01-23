@@ -196,19 +196,19 @@ def main():
         help="truncate the file name",
     )
     parser.add_argument(
-        "-o", "--outdir", default=DEFAULT_OUT_DIR, help="dwonload output dir"
+        "-o", "--outdir", default=DEFAULT_OUT_DIR, help="download output dir"
     )
     parser.add_argument(
         "-od",
         "--outdedrmdir",
         default=DEFAULT_OUT_DEDRM_DIR,
-        help="dwonload output dedrm dir",
+        help="download output dedrm dir",
     )
     parser.add_argument(
         "-oe",
         "--outepubmdir",
         default=DEFAULT_OUT_EPUB_DIR,
-        help="dwonload output epub dir",
+        help="download output epub dir",
     )
     parser.add_argument(
         "-s",
