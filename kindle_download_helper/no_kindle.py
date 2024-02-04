@@ -237,20 +237,24 @@ class NoKindle:
             book_info.get("origins", {}).get("origin", {}).get("type", "") == "Purchase"
         )
 
-    def sidecar_ebook(self, asin):
-        url = f"https://sars.amazon.com/sidecar/sa/EBOK/{asin}"
-        r = self.session.send(
-            amazon_api.signed_request(
-                "GET",
-                url,
-                tokens=self.tokens,
+    def pdoc_bookmark(self, asin):
+        url = f"https://cde-ta-g7g.amazon.com/FionaCDEServiceEngine/sidecar?type=PDOC&key={asin}"
+        try:
+            r = self.session.send(
+                amazon_api.signed_request(
+                    "GET",
+                    url,
+                    tokens=self.tokens,
+                )
             )
-        )
-        print(r.json())
+            print(r.json())
+        except:
+            return None
 
     def make_all_pdoc_info(self):
-        # TODO
-        pass
+        for asin, v in self.pdoc_library_dict.items():
+            print(asin, v)
+            self.pdoc_bookmark(asin)
 
     def make_all_ebook_info(self):
         # TODO pdoc
