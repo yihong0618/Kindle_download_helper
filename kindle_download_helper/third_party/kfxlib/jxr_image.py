@@ -1353,9 +1353,9 @@ class ImgPlane(object):
 
             for y in range(self.image.height):
                 for x in range(self.image.width):
-                    self.ImagePlane[1][x][y] = self.ImagePlane[2][x][
-                        y
-                    ] = self.ImagePlane[0][x][y]
+                    self.ImagePlane[1][x][y] = self.ImagePlane[2][x][y] = (
+                        self.ImagePlane[0][x][y]
+                    )
 
             self.internal_clr_fmt == RGB
             self.NumComponents = 3

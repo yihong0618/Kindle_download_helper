@@ -265,9 +265,9 @@ class KFX_EPUB_Navigation(object):
                     anchor=anchor_name,
                     children=nested_toc,
                     description=description,
-                    icon=self.process_external_resource(icon).filename
-                    if icon
-                    else None,
+                    icon=(
+                        self.process_external_resource(icon).filename if icon else None
+                    ),
                 )
             )
 

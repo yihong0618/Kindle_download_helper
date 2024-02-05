@@ -187,7 +187,9 @@ class NoKindle:
             else:
                 book_title = i["title"]
             book_title = re.sub(
-                r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)", "", book_title
+                r"(\（[^)]*\）)|(\([^)]*\))|(\【[^)]*\】)|(\[[^)]*\])|(\s)",
+                "",
+                book_title,
             )
             book_title = book_title.replace(" ", "")
             is_pdoc = i.get("origins") is None
@@ -247,17 +249,11 @@ class NoKindle:
                     tokens=self.tokens,
                 )
             )
-            print(r.json())
+            return r.json()
         except:
             return None
 
-    def make_all_pdoc_info(self):
-        for asin, v in self.pdoc_library_dict.items():
-            print(asin, v)
-            self.pdoc_bookmark(asin)
-
     def make_all_ebook_info(self):
-        # TODO pdoc
         self.highlight_index = 0
         for asin, v in self.ebook_library_dict.items():
             self.highlight_index += 1
@@ -274,7 +270,7 @@ class NoKindle:
             for r in manifest["resources"]:
                 if r["type"] == "KINDLE_USER_ANOT":
                     url = r["endpoint"]["url"]
-                    book_mark_info = self.sidecar_bookmark(url)
+                    book_mark_info = self.ebook_bookmark(url)
                     if not book_mark_info:
                         continue
                     records = book_mark_info["payload"]["records"]
@@ -376,7 +372,7 @@ class NoKindle:
             print(f"Order error to error list {order_id}")
             self.error_price_list.append(v)
 
-    def sidecar_bookmark(self, sidecar_url):
+    def ebook_bookmark(self, sidecar_url):
         r = self.session.send(
             amazon_api.signed_request(
                 "GET",
@@ -407,17 +403,43 @@ class NoKindle:
             )
         )
         try:
-            resources = manifest_resp.json()["resources"]
+            resources_data = manifest_resp.json()
+            if resources_data.get("resources") is None:
+                print(f"wrong resource for asin {asin} error: {resources_data}")
+                data = self._list_book_consumptions(asin)
+                devices_ids_string = ",".join(
+                    [
+                        i["deviceAccountId"]
+                        for i in data["ListConsumptionsResponse"]["result"]["entry"][
+                            "value"
+                        ]["entry"]["value"]["member"]
+                    ]
+                )
+                print(devices_ids_string)
+                self._remove_book_consumptions(asin, devices_ids_string)
+                # do it again
+                manifest_resp = self.session.send(
+                    amazon_api.signed_request(
+                        "GET",
+                        API_MANIFEST_URL + asin.upper(),
+                        asin=asin,
+                        tokens=self.tokens,
+                        request_type="manifest",
+                    )
+                )
+                resources_data = manifest_resp.json()
+                resources = resources_data["resources"]
+            else:
+                resources = resources_data["resources"]
         except Exception as e:
-            print(manifest_resp.json(), str(e))
+            print(resources_data, str(e))
             return None, False, str(e)
-        manifest = manifest_resp.json()
         # azw3 is not so hard
         drm_voucher_list = [
             resource for resource in resources if resource["type"] == "DRM_VOUCHER"
         ]
         if not drm_voucher_list:
-            return manifest, False, "Succeed"
+            return resources_data, False, "Succeed"
 
         drm_voucher = drm_voucher_list[0]
         try:
@@ -427,13 +449,57 @@ class NoKindle:
         except:
             print("Could not decrypt the drm voucher!")
 
-        manifest["responseContext"] = self._b64ion_to_dict(manifest["responseContext"])
-        for resource in manifest["resources"]:
+        resources_data["responseContext"] = self._b64ion_to_dict(
+            resources_data["responseContext"]
+        )
+        for resource in resources_data["resources"]:
             if "responseContext" in resource:
                 resource["responseContext"] = self._b64ion_to_dict(
                     resource["responseContext"]
                 )
-        return manifest, True, "Succeed"
+        return resources_data, True, "Succeed"
+
+    def _list_book_consumptions(self, asin):
+        url = f"https://prod.us-east-1.library-relay.kindle.amazon.dev/list-consumptions?contentInput=%5B%7B%22id%22%3A%22{asin}%22%2C%22type%22%3A%22EBook%22%2C%22pid%22%3A%22%22%7D%5D"
+
+        r = requests.get(
+            url,
+            headers={
+                "User-Agent": random.choice(USER_AGENTS),
+                "Authorization": f"Bearer {self.tokens['access_token']}",
+                "client": "KindleForiOS",
+            },
+        )
+        try:
+            print(xmltodict.parse(r.text))
+            return xmltodict.parse(r.text)
+        except Exception as e:
+            print(e)
+            return None
+
+    def _remove_book_consumptions(self, asin, devices_id_string):
+        headers = {
+            "Authorization": f"Bearer {self.tokens['access_token']}",
+            "Upload-Incomplete": "?0",
+            "Upload-Draft-Interop-Version": "3",
+            "client": "KindleForiOS",
+        }
+
+        json_data = {
+            "id": asin,
+            "type": "EBook",
+            "pid": "",
+            "deviceAccountIds": devices_id_string,
+        }
+
+        try:
+            requests.post(
+                "https://prod.us-east-1.library-relay.kindle.amazon.dev/remove-consumptions",
+                headers=headers,
+                json=json_data,
+            )
+        except Exception as e:
+            print(f"Something is wrong for delete devices for {asin} error: {str(e)}")
 
     def download_book(self, asin, error=None):
         manifest, is_kfx, info = self.get_book(asin)
@@ -716,6 +782,39 @@ class NoKindle:
             for row in book_list:
                 writer.writerow(row)
         print("File: my_kindle_stats.csv and my_kindle_stats.md have been generated")
+
+    def make_all_bookmark(self):
+        """
+        this include both ebooks and pdocs
+        """
+        amazon_api.refresh(self.tokens)
+        # make all ebooks bookmark
+        ebook_bookmark_dict_list = []
+        pdoc_bookmarl_dict_list = []
+        for asin, value in self.ebook_library_dict.items():
+            manifest, _, info = self.get_book(asin)
+            if not manifest:
+                continue
+            for r in manifest["resources"]:
+                if r["type"] == "KINDLE_USER_ANOT":
+                    url = r["endpoint"]["url"]
+                    book_mark_info = self.ebook_bookmark(url)
+                    if book_mark_info:
+                        value.update(book_mark_info)
+            print(value)
+            ebook_bookmark_dict_list.append(value)
+        with open("ebooks_bookmark.json", "w", encoding="utf8") as f:
+            json.dump(ebook_bookmark_dict_list, f, indent=4, ensure_ascii=False)
+
+        # make all pdoc bookmark
+        for asin, value in self.pdoc_library_dict.items():
+            pdoc_bookmark = self.pdoc_bookmark(asin)
+            if pdoc_bookmark:
+                value.update(pdoc_bookmark)
+            print(value)
+            pdoc_bookmarl_dict_list.append(value)
+        with open("pdocs_bookmark.json", "w", encoding="utf8") as f:
+            json.dump(pdoc_bookmarl_dict_list, f, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":

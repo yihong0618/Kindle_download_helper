@@ -176,9 +176,11 @@ class YJFragmentKey(IonAnnots):
 
     def sort_key(self):
         return (
-            PREFERED_FRAGMENT_TYPE_ORDER.index(self.ftype)
-            if self.ftype in PREFERED_FRAGMENT_TYPE_ORDER
-            else len(PREFERED_FRAGMENT_TYPE_ORDER),
+            (
+                PREFERED_FRAGMENT_TYPE_ORDER.index(self.ftype)
+                if self.ftype in PREFERED_FRAGMENT_TYPE_ORDER
+                else len(PREFERED_FRAGMENT_TYPE_ORDER)
+            ),
             natural_sort_key(self.fid),
         )
 

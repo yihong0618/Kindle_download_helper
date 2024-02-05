@@ -594,9 +594,9 @@ class BookStructure(object):
                 % (self.cde_type, is_sample)
             )
 
-        has_hdv_image = (
-            has_tiles
-        ) = has_overlapped_tiles = has_jpeg_rst_marker = has_jpeg_xr_image = False
+        has_hdv_image = has_tiles = has_overlapped_tiles = has_jpeg_rst_marker = (
+            has_jpeg_xr_image
+        ) = False
 
         for fragment in self.fragments.get_all("$164"):
             resource_name = str(fragment.fid)

@@ -69,9 +69,9 @@ class JXRContainer(object):
         header.extract(ifd_offset - header.offset)
 
         pixel_format = ""
-        self.image_width = (
-            self.image_height
-        ) = image_offset = image_byte_count = self.image_data = None
+        self.image_width = self.image_height = image_offset = image_byte_count = (
+            self.image_data
+        ) = None
 
         num_entries = header.unpack("<H", "num_entries")
 

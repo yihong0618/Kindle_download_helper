@@ -91,6 +91,12 @@ def no_main():
         help="Generate your kindle memory to md and csv files",
     )
     parser.add_argument(
+        "--bookmark",
+        dest="bookmark",
+        action="store_true",
+        help="Generate your kindle bookmark to md and json files",
+    )
+    parser.add_argument(
         "--only-price",
         dest="only_price",
         action="store_true",
@@ -126,6 +132,10 @@ def no_main():
             )
         else:
             nk.make_ebook_memory()
+        return
+
+    if options.bookmark:
+        nk.make_all_bookmark()
         return
 
     # download books part

@@ -78,9 +78,9 @@ class KpfContainer(YJContainer):
         self.ignore_drm = ignore_drm
         self.fragments.clear()
 
-        self.kpf_datafile = (
-            self.kdf_datafile
-        ) = self.kcb_datafile = self.kcb_data = self.source_epub = None
+        self.kpf_datafile = self.kdf_datafile = self.kcb_datafile = self.kcb_data = (
+            self.source_epub
+        ) = None
 
         if self.datafile.is_zipfile():
             self.kpf_datafile = self.datafile

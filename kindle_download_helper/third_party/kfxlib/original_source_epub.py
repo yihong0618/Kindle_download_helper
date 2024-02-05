@@ -161,9 +161,9 @@ class SourceEpub(object):
         self.id_map = {}
         self.id_replace = {}
         self.spine_ids = set()
-        self.is_dictionary = (
-            self.is_kim
-        ) = self.is_vertical_rl = self.is_fixed_layout = self.issue_date = False
+        self.is_dictionary = self.is_kim = self.is_vertical_rl = (
+            self.is_fixed_layout
+        ) = self.issue_date = False
         self.book_type = "book"
         self.authors = []
         self.content_languages = collections.defaultdict(lambda: 0)

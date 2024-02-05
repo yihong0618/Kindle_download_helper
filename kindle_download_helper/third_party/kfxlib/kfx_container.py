@@ -333,9 +333,9 @@ class KfxContainer(YJContainer):
         doc_symbols = None
         format_capabilities = None
 
-        container_cnt = (
-            format_capabilities_cnt
-        ) = ion_symbol_table_cnt = container_entity_map_cnt = 0
+        container_cnt = format_capabilities_cnt = ion_symbol_table_cnt = (
+            container_entity_map_cnt
+        ) = 0
 
         for fragment in self.get_fragments():
             if fragment.ftype == "$270":

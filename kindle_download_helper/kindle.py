@@ -408,9 +408,9 @@ class Kindle:
                 books_len=len(ebooks) if ebooks else 0,
                 pdocs_len=len(pdocs) if pdocs else 0,
                 first_book_title=first_ebook["title"] if first_ebook else "",
-                first_book_bought_date=first_ebook["acquiredDate"]
-                if first_ebook
-                else "",
+                first_book_bought_date=(
+                    first_ebook["acquiredDate"] if first_ebook else ""
+                ),
                 first_doc_title=first_pdoc["title"] if first_pdoc else "",
                 first_doc_push_date=first_pdoc["acquiredDate"] if first_pdoc else "",
             )

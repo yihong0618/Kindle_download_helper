@@ -655,9 +655,11 @@ def windows_error(hresult=None):
 
     return "%08x (%s)" % (
         hresult,
-        ctypes.FormatError(hresult & 0xFFFF)
-        if hresult & 0xFFFF0000 in [0x80070000, 0]
-        else "?",
+        (
+            ctypes.FormatError(hresult & 0xFFFF)
+            if hresult & 0xFFFF0000 in [0x80070000, 0]
+            else "?"
+        ),
     )
 
 

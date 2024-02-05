@@ -15,6 +15,10 @@ python no_kindle.py -e ${email} -p ${password}
 
 # 你可以生成所有你电子书的购买记录，笔记记录来分析展示
 python no_kindle.py -e ${email} -p ${password} --memory
+
+# 支持导出全部标记书签及阅读信息（Clipping 信息）#153
+python no_kindle.py -e ${email} -p ${password} --bookmark
+
 ```
 
 

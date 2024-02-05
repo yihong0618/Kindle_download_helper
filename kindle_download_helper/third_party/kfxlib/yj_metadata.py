@@ -47,12 +47,12 @@ class YJ_Metadata(object):
             author_sort_name if author_sort_fn is None else author_sort_fn
         )
         self.replace_existing_authors_with_sort = replace_existing_authors_with_sort
-        self.title = (
-            self.cde_content_type
-        ) = self.asin = self.cover_image_data = self.description = None
-        self.issue_date = (
-            self.language
-        ) = self.publisher = self.book_id = self.features = self.asset_id = None
+        self.title = self.cde_content_type = self.asin = self.cover_image_data = (
+            self.description
+        ) = None
+        self.issue_date = self.language = self.publisher = self.book_id = (
+            self.features
+        ) = self.asset_id = None
 
 
 class BookMetadata(object):
@@ -453,9 +453,11 @@ class BookMetadata(object):
                 generators.add(
                     (
                         fragment.value.get("$587", ""),
-                        package_version
-                        if package_version not in PACKAGE_VERSION_PLACEHOLDERS
-                        else "",
+                        (
+                            package_version
+                            if package_version not in PACKAGE_VERSION_PLACEHOLDERS
+                            else ""
+                        ),
                     )
                 )
 
@@ -482,9 +484,11 @@ class BookMetadata(object):
                     (
                         cf.get("$586", ""),
                         cf.get("$492", ""),
-                        major_version
-                        if minor_version == 0
-                        else (major_version, minor_version),
+                        (
+                            major_version
+                            if minor_version == 0
+                            else (major_version, minor_version)
+                        ),
                     )
                 )
 

@@ -52,9 +52,9 @@ class SymbolTableCatalog(object):
             or shared_symbol_table.version
             >= self.shared_symbol_tables[(shared_symbol_table.name, None)].version
         ):
-            self.shared_symbol_tables[
-                (shared_symbol_table.name, None)
-            ] = shared_symbol_table
+            self.shared_symbol_tables[(shared_symbol_table.name, None)] = (
+                shared_symbol_table
+            )
 
     def create_shared_symbol_table(self, symbol_table_data):
         self.add_shared_symbol_table(

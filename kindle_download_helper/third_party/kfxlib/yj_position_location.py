@@ -983,13 +983,17 @@ class BookPosLoc(object):
                     log.info(
                         "position_id at %sidx=%d %s%s"
                         % (
-                            ("cidx=%d " % content.index)
-                            if content.index != map.index
-                            else "",
+                            (
+                                ("cidx=%d " % content.index)
+                                if content.index != map.index
+                                else ""
+                            ),
                             map.index,
-                            ("cpid=%d " % content.chunk().pid)
-                            if content.chunk().pid != map.chunk().pid
-                            else "",
+                            (
+                                ("cpid=%d " % content.chunk().pid)
+                                if content.chunk().pid != map.chunk().pid
+                                else ""
+                            ),
                             repr(map.chunk()),
                         )
                     )
@@ -1327,12 +1331,16 @@ class BookPosLoc(object):
                                 "A list of %d %s pages is already present with %s pages desired"
                                 % (
                                     real_num_pages,
-                                    "approximate"
-                                    if nav_container_name == APPROXIMATE_PAGE_LIST
-                                    else "real",
-                                    str(desired_num_pages)
-                                    if desired_num_pages
-                                    else "auto",
+                                    (
+                                        "approximate"
+                                        if nav_container_name == APPROXIMATE_PAGE_LIST
+                                        else "real"
+                                    ),
+                                    (
+                                        str(desired_num_pages)
+                                        if desired_num_pages
+                                        else "auto"
+                                    ),
                                 )
                             )
 

@@ -353,9 +353,9 @@ class EPUB_Output(object):
 
     def set_book_type(self, book_type):
         self.book_type = book_type
-        self.is_children = (
-            self.is_comic
-        ) = self.is_magazine = self.is_print_replica = False
+        self.is_children = self.is_comic = self.is_magazine = self.is_print_replica = (
+            False
+        )
 
         if self.book_type is None:
             pass
@@ -1125,9 +1125,11 @@ class EPUB_Output(object):
             if not self.generate_epub2:
                 add_metadata_meta_property(
                     prefix("rendition:orientation"),
-                    self.orientation_lock
-                    if self.orientation_lock != "none"
-                    else "auto",
+                    (
+                        self.orientation_lock
+                        if self.orientation_lock != "none"
+                        else "auto"
+                    ),
                 )
 
             add_metadata_meta_name_content("orientation-lock", self.orientation_lock)

@@ -2049,9 +2049,9 @@ class KFX_EPUB_Properties(object):
                     name_prefix=prop_name_prefix, remove_prefix=True
                 )
                 if selector_style:
-                    self.css_rules[
-                        class_selector(class_name) + selector_suffix
-                    ] = selector_style
+                    self.css_rules[class_selector(class_name) + selector_suffix] = (
+                        selector_style
+                    )
                     selector_classes.add(class_name)
 
             classes[class_name] = style
