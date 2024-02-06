@@ -6,6 +6,7 @@ Download all your kindle books script.
 
 ## 2023.06.26 如果你没有 kindle 实体设备可以用以下命令，下载后的 epub 在 EPUB 文件夹内。
 
+遇到 `AttributeError: 'NoneType' object has no attribute 'url'` 问题可用参考这个 https://github.com/yihong0618/Kindle_download_helper/issues/155#issuecomment-1928677849
 ```console
 pip3 install -r requirements.txt
 python no_kindle.py -e ${email} -p ${password}
@@ -13,12 +14,9 @@ python no_kindle.py -e ${email} -p ${password}
 # 如果你想下载推送的书
 python no_kindle.py -e ${email} -p ${password}
 
-```
 # !!!!!! 亚马逊下架了中国区 web 商城，这个不好用了。
 # 你可以生成所有你电子书的购买记录，笔记记录来分析展示
 python no_kindle.py -e ${email} -p ${password} --memory
-```
-
 
 # 支持导出全部标记书签及阅读信息（Clipping 信息）#153
 python no_kindle.py -e ${email} -p ${password} --bookmark
