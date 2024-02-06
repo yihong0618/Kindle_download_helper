@@ -240,26 +240,8 @@ def refresh(tokens):
         json=body,
     ).json()
 
-    t = response_json["access_token"]
-    data = {
-        "app_name": APP_NAME,
-        "app_version": APP_VERSION,
-        "source_token_type": "refresh_token",
-        "source_token": t,
-        "requested_token_type": "auth_cookies",
-        "domain": f".amazon.{tokens['domain']}",
-    }
-    url = f"https://www.amazon.{tokens['domain']}/ap/exchangetoken"
-    r = s.post(url, headers=get_auth_headers(tokens["domain"]), data=data)
-    raw_cookies = r.json()["response"]["tokens"]["cookies"]
-    website_cookies = {}
-    for domain_cookies in raw_cookies:
-        for cookie in raw_cookies[domain_cookies]:
-            website_cookies[cookie["Name"]] = cookie["Value"].replace(r'"', r"")
-
     try:
         tokens["access_token"] = response_json["access_token"]
-        tokens["website_cookies"] = website_cookies
     except:
         print(json.dumps(response_json))
     return tokens
