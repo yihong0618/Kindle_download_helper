@@ -4,6 +4,8 @@ Download all your kindle books script.
 
 ![image](https://user-images.githubusercontent.com/15976103/172113700-7be0ae1f-1aae-4b50-8377-13047c63411b.png)
 
+## **2024.01 亚马逊关了中国商店首页，你可以访问这个链接下载书 https://www.amazon.cn/hz/mycd/myx#/home/content/booksAll/dateDsc/**
+
 ## 2023.06.26 如果你没有 kindle 实体设备可以用以下命令，下载后的 epub 在 EPUB 文件夹内。
 
 遇到 `AttributeError: 'NoneType' object has no attribute 'url'` 问题可用参考这个 https://github.com/yihong0618/Kindle_download_helper/issues/155#issuecomment-1928677849
