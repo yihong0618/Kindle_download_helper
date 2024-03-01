@@ -174,9 +174,12 @@ class NoKindle:
         library = xmltodict.parse(r.text)
         library = json.loads(json.dumps(library))
         library = library["response"]["add_update_list"]
-        ebooks = [i for i in library["meta_data"] if i["cde_contenttype"] == "EBOK"]
+        meta_data: dict | list = library["meta_data"]
+        if isinstance(meta_data, dict):
+            meta_data = [meta_data]
+        ebooks = [i for i in meta_data if i["cde_contenttype"] == "EBOK"]
         ebooks = [e for e in ebooks if self._is_ebook(e)]
-        pdocs = [i for i in library["meta_data"] if i["cde_contenttype"] == "PDOC"]
+        pdocs = [i for i in meta_data if i["cde_contenttype"] == "PDOC"]
         unknow_index = 1
 
         for i in ebooks + pdocs:
