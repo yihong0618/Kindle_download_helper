@@ -1,6 +1,6 @@
 requests
 browser-cookie3
-mobi
+moki
 amazon.ion
 rich
 xmltodict
@@ -12,3 +12,4 @@ lxml
 bs4
 cloudscraper
 pywin32 ; sys_platform == 'win32'
+
