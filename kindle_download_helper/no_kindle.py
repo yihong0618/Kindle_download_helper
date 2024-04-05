@@ -17,7 +17,7 @@ import requests
 from requests.utils import cookiejar_from_dict
 import xmltodict
 from amazon.ion import simpleion
-from mobi import extract
+from moki import extract
 from rich import print
 
 from kindle_download_helper import amazon_api

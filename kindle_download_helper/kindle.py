@@ -18,7 +18,7 @@ from http.cookies import SimpleCookie
 
 import requests
 import urllib3
-from mobi import extract
+from moki import extract
 from requests.adapters import HTTPAdapter
 
 from kindle_download_helper.config import (
