@@ -14,7 +14,7 @@ pip3 install -r requirements.txt
 python no_kindle.py -e ${email} -p ${password}
 
 # 如果你想下载推送的书
-python no_kindle.py -e ${email} -p ${password}
+python no_kindle.py -e ${email} -p ${password} --pdoc
 
 # !!!!!! 亚马逊下架了中国区 web 商城，这个不好用了。
 # 你可以生成所有你电子书的购买记录，笔记记录来分析展示
