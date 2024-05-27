@@ -226,7 +226,14 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 - 如果有很多同名 pdoc 或 book 可以使用 `--resolve_duplicate_names` 解决同名冲突
 - error log 记录在 .error_books.log 中
 - 支持生成最近读完书的 README `--readme` 生成的文件在 `my_kindle_stats.md` 中
-- 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里
+- 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里，默认同时输出 azw 和 epub 两种格式
+
+```
+pip install mobi
+
+# 其中后 3 个参数，仅在必要时指定
+python3 dedrm.py 源目录 目标目录 密钥 输出格式
+```
 
 ## Note
 
