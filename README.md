@@ -227,6 +227,13 @@ python3 kindle.py --cn --cookie ${cookie} ${csrfToken}
 - error log 记录在 .error_books.log 中
 - 支持生成最近读完书的 README `--readme` 生成的文件在 `my_kindle_stats.md` 中
 - 支持 mobi 类型的文件直接 dedrm `--dedrm` 生成的文件在 `DEDRMS` 里
+- 脚本 `dedrm.py` 用于单独解密已下载的电子书文件，默认同时输出 azw 和 epub 两种格式
+
+```
+# 其中后 3 个参数，仅在必要时指定，用法 python3 dedrm.py 1源目录 2目标目录 3密钥 4输出格式
+#   例如对 ebook 中的文件解密，并只生成 epub 格式的 dedrm 文件
+$ python3 dedrm.py ebook DeDRMed key.txt中的密钥串 epub
+```
 
 ## Note
 
