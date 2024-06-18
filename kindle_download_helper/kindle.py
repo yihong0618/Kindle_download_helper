@@ -334,7 +334,11 @@ class Kindle:
             if not result.get("success", True):
                 logger.error("get all books error: %s", result.get("error"))
                 break
-            items = result["OwnershipData"]["items"]
+            try:
+                items = result["OwnershipData"]["items"]
+            except KeyError:
+                logger.error("get all books error: %s", result.get("error"))
+                break
             for item in items:
                 if filetype == "PDOC":
                     item["title"] = html.unescape(item["title"])
